@@ -87,46 +87,6 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    public void addClick(View v) {
-        EditText number1 = (EditText) findViewById(R.id.number1);
-        EditText number2 = (EditText) findViewById(R.id.number2);
-        TextView result = (TextView) findViewById(R.id.result);
-
-        int n1 = Integer.parseInt(number1.getText().toString());
-        int n2 = Integer.parseInt(number2.getText().toString());
-        result.setText(Integer.toString(n1 + n2));
-    }
-
-    public void subtractClick(View v) {
-        EditText number1 = (EditText) findViewById(R.id.number1);
-        EditText number2 = (EditText) findViewById(R.id.number2);
-        TextView result = (TextView) findViewById(R.id.result);
-
-        int n1 = Integer.parseInt(number1.getText().toString());
-        int n2 = Integer.parseInt(number2.getText().toString());
-        result.setText(Integer.toString(n1 - n2));
-    }
-
-    public void multiplyClick(View v) {
-        EditText number1 = (EditText) findViewById(R.id.number1);
-        EditText number2 = (EditText) findViewById(R.id.number2);
-        TextView result = (TextView) findViewById(R.id.result);
-
-        int n1 = Integer.parseInt(number1.getText().toString());
-        int n2 = Integer.parseInt(number2.getText().toString());
-        result.setText(Integer.toString(n1 * n2));
-    }
-
-    public void devideClick(View v) {
-        EditText number1 = (EditText) findViewById(R.id.number1);
-        EditText number2 = (EditText) findViewById(R.id.number2);
-        TextView result = (TextView) findViewById(R.id.result);
-
-        int n1 = Integer.parseInt(number1.getText().toString());
-        int n2 = Integer.parseInt(number2.getText().toString());
-        result.setText(Integer.toString(n1 / n2));
-    }
-
     /*
      * ActivityCompat.requestPermissions를 사용한 퍼미션 요청의 결과를 리턴받는 메소드입니다.
      */
