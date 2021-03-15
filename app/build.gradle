@@ -9,7 +9,8 @@ android {
     defaultConfig {
         applicationId "com.example.jjwlzperformancetesting"
         minSdkVersion 28
-        targetSdkVersion 30
+        // Android 10부터는 home디렉토리에서 exec실행 안됨, https://developer.android.com/about/versions/10/behavior-changes-10?hl=en#execute-permission
+        targetSdkVersion 28
         versionCode 1
         versionName "1.0"
 
@@ -26,6 +27,7 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+    ndkVersion '23.0.7123448 rc1'
 }
 
 dependencies {

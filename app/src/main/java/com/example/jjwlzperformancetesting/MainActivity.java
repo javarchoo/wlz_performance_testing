@@ -12,6 +12,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.AssetManager;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.LocationManager;
@@ -36,7 +37,14 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -46,6 +54,9 @@ public class MainActivity extends AppCompatActivity {
     private GpsTracker gpsTracker;
     private static boolean IS_LTE = false;
     private static boolean IS_5G = false;
+    private static final String UNAVAILABLE = "(N/A)";
+    private static final String DBM = "dBm";
+    private static final String DB = "dB";
 
     private static final int GPS_ENABLE_REQUEST_CODE = 2001;
     private static final int PERMISSIONS_REQUEST_CODE = 100;
@@ -294,7 +305,7 @@ public class MainActivity extends AppCompatActivity {
     public void getSignalStatus(View v) {
 
         String networkType = "";
-        int dbm = 0;
+        int sst = 0;
         int rsrp = 0;
         int rsrq = 0;
         int rssi = 0;
@@ -317,7 +328,7 @@ public class MainActivity extends AppCompatActivity {
             // to handle the case where the user grants the permission. See the documentation
             // for ActivityCompat#requestPermissions for more details.
             // TODO - debug
-            System.out.println("권한체크 에러");
+            System.out.println("권한체크 에러 - READ_PHONE_STATE - 설정,어플리케이션,앱이름,권한,전화 허");
             return;
         }
 
@@ -331,7 +342,7 @@ public class MainActivity extends AppCompatActivity {
             // to handle the case where the user grants the permission. See the documentation
             // for ActivityCompat#requestPermissions for more details.
             // TODO - debug
-            System.out.println("권한체크 에러");
+            System.out.println("권한체크 에러 - ACCESS_FINE_LOCATION");
             return;
         }
 
@@ -339,7 +350,7 @@ public class MainActivity extends AppCompatActivity {
 
         networkType = SignalStatus.getNetworkTypeName(tm.getNetworkType());
         TextView networkMode = (TextView) findViewById(R.id.networkMode);
-        networkMode.setText(networkType);
+        networkMode.setText("Network Mode: " + networkType);
 
         List<CellInfo> cellInfoList = tm.getAllCellInfo();
         // TODO - debug
@@ -351,41 +362,210 @@ public class MainActivity extends AppCompatActivity {
                     if (cellInfoList.get(i) instanceof CellInfoWcdma) {
                         CellInfoWcdma cellInfoWcdma = (CellInfoWcdma) cellInfoList.get(i);
                         CellSignalStrengthWcdma cs = cellInfoWcdma.getCellSignalStrength();
-                        dbm = cs.getDbm();
+                        sst = cs.getDbm();
                     } else if (cellInfoList.get(i) instanceof CellInfoGsm) {
                         CellInfoGsm cellInfogsm = (CellInfoGsm) cellInfoList.get(i);
                         CellSignalStrengthGsm cs = cellInfogsm.getCellSignalStrength();
-                        dbm = cs.getDbm();
+                        sst = cs.getDbm();
                     } else if (cellInfoList.get(i) instanceof CellInfoCdma) {
                         CellInfoCdma cellInfoCdma = (CellInfoCdma) cellInfoList.get(i);
                         CellSignalStrengthCdma cs = cellInfoCdma.getCellSignalStrength();
-                        dbm = cs.getDbm();
+                        sst = cs.getDbm();
                     } else if (cellInfoList.get(i) instanceof CellInfoLte) {
-                        System.out.println("@@@@@@@@LTE");
                         CellInfoLte cellInfoLte = (CellInfoLte) cellInfoList.get(i);
                         CellSignalStrengthLte cs = cellInfoLte.getCellSignalStrength();
-                        dbm = cs.getDbm();
-                        signalStatus = signalStatus.concat("RSRP/RSRQ/Rssi/Rssnr: ").
-                                concat(cs.getRsrp() + "/" + cs.getRsrq() + "/" + cs.getRssi() + "/" + cs.getRssnr());
+                        sst = cs.getDbm();
+                        signalStatus = getSignalStatusLTE(cs);
                     } else if (cellInfoList.get(i) instanceof CellInfoNr) {
-                        System.out.println("@@@@@@@@NR");
                         CellInfoNr cellInfoNr = (CellInfoNr) cellInfoList.get(i);
                         CellSignalStrengthNr cs = (CellSignalStrengthNr) cellInfoNr.getCellSignalStrength();
-                        dbm = cs.getDbm();
-                        signalStatus = signalStatus.concat("CSI RSRP/RSRQ/SINR, SS RSRP/RSRQ/SINR: ")
-                                .concat(cs.getCsiRsrp() + "/" + cs.getCsiRsrq() + "/" + cs.getCsiSinr())
-                                .concat("SS RSRP/RSRQ/SINR: ")
-                                .concat(cs.getSsRsrp() + "/" + cs.getSsRsrq() + "/" + cs.getSsSinr());
+                        sst = cs.getDbm();
+                        signalStatus = getSignalStatusNR(cs);
                     }
                 }
             }
         }
 
         TextView signalStrength = (TextView) findViewById(R.id.signalStrength);
-        signalStrength.setText(String.valueOf("Signal Strength" + dbm));
+        signalStrength.setText(String.valueOf("Signal Strength: " + sst + " " + DBM));
 
         System.out.println("Signal Status :" + signalStatus);
         TextView signalStatusStr = (TextView) findViewById(R.id.signalStatusStr);
         signalStatusStr.setText(signalStatus);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.Q)
+    private static String getSignalStatusLTE (CellSignalStrengthLte cs) {
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("RSRP/Rssi/RSRQ/Rssnr: ");
+
+        sb.append(cs.getRsrp() + " " + DBM);
+
+        sb.append("/");
+        if (isUnavailable(cs.getRssi())) {
+            sb.append(UNAVAILABLE);
+        } else {
+            sb.append(cs.getRssi() + " " + DBM);
+        }
+
+        sb.append("/");
+        if (isUnavailable(cs.getRsrq())) {
+            sb.append(UNAVAILABLE);
+        } else {
+            sb.append(cs.getRsrq());
+        }
+
+        sb.append("/");
+        if (isUnavailable(cs.getRssnr())) {
+            sb.append(UNAVAILABLE);
+        } else {
+            sb.append(cs.getRssnr());
+        }
+        return sb.toString();
+
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.Q)
+    private static String getSignalStatusNR (CellSignalStrengthNr cs) {
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("CSI RSRP/RSRQ/SINR: ");
+
+        if (isUnavailable(cs.getCsiRsrp())) {
+            sb.append(UNAVAILABLE);
+        } else {
+            sb.append(cs.getCsiRsrp() + " " + DBM);
+        }
+
+        sb.append("/");
+        if (isUnavailable(cs.getCsiRsrq())) {
+            sb.append(UNAVAILABLE);
+        } else {
+            sb.append(cs.getCsiRsrq() + " " + DB);
+        }
+
+        if (isUnavailable(cs.getCsiSinr())) {
+            sb.append(UNAVAILABLE);
+        } else {
+            sb.append(cs.getCsiSinr() + " " + DB);
+        }
+
+        sb.append("\\r\\n");
+        sb.append("SS RSRP/RSRQ/SINR: ");
+
+        if (isUnavailable(cs.getSsRsrp())) {
+            sb.append(UNAVAILABLE);
+        } else {
+            sb.append(cs.getSsRsrp() + " " + DBM);
+        }
+
+        sb.append("/");
+        if (isUnavailable(cs.getSsRsrq())) {
+            sb.append(UNAVAILABLE);
+        } else {
+            sb.append(cs.getSsRsrq() + " " + DB);
+        }
+
+        if (isUnavailable(cs.getSsSinr())) {
+            sb.append(UNAVAILABLE);
+        } else {
+            sb.append(cs.getSsSinr() + " " + DB);
+        }
+        return sb.toString();
+    }
+
+    private static boolean isUnavailable(int i) {
+        if (i==2147483647) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    
+    public void executeCmd(View v){
+
+        System.out.println("@@실행됨");
+
+        TextView testResult = (TextView) findViewById(R.id.testResult);
+
+        String str = "ping -A -W 50 -c 2 223.62.93.226";
+//        String str = "netperf -H 223.62.93.226 -l 100 -t TCP_RR -v 2 -- -o min_latency,mean_latency,max_latency,stddev_latency,transaction_rate";
+
+        ShellExecutor se = new ShellExecutor();
+        testResult.setText(se.execute(str));
+
+    }
+
+    public void executeCmdInstall (View v) throws IOException {
+
+        String fileName = "iperf3";
+        String fullName  = "/data/user/0/com.example.jjwlzperformancetesting/files/iperf3";
+        String commandStr = "";
+        ShellExecutor se = new ShellExecutor();
+
+        // app/assets/iperf3파일을 핸드폰으로 복사
+        copyAssets(fileName);
+
+        // 파일권한 변경 "chmod 755 /data/user/0/com.example.jjwlzperformancetesting/files/iperf3"
+        se.execute("chmod 755 " + fullName);
+
+        // iperf3 실행 "/data/user/0/com.example.jjwlzperformancetesting/files/iperf3  -c 223.62.93.226  udp -b 1G -t 2 –J -R"
+        commandStr = fullName + " -c 223.62.93.226  udp -b 1G -t 2 –J -R";
+        System.out.println(se.execute(commandStr));
+
+    }
+
+    private void copyAssets(String filename) throws IOException {
+
+        String appFileDirectory = getFilesDir().getPath();
+        String executableFilePath = appFileDirectory + "/iperf3";
+
+        AssetManager assetManager = getAssets();
+
+        InputStream is = null;
+        OutputStream os = null;
+        Log.d("", "Attempting to copy this file: " + filename); // + " to: " +       assetCopyDestination);
+
+        try {
+            is = assetManager.open(filename);
+            Log.d("", "outDir: " + appFileDirectory);
+            File outFile = new File(appFileDirectory, filename);
+            System.out.println("@@@@@@@@@@@@:  " +outFile.getAbsolutePath());
+            os = new FileOutputStream(outFile);
+
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = is.read(buffer)) > 0) {
+                os.write(buffer, 0, length);
+            }
+        } catch(IOException e) {
+            Log.e("", "Failed to copy asset file: " + filename, e);
+        } finally {
+            is.close();
+            is = null;
+            os.flush();
+            os.close();
+            os = null;
+        }
+
+        Log.d("", "Copy success: " + filename);
+    }
+
+    private static void copyFileUsingStream(File source, File dest) throws IOException {
+        InputStream is = null;
+        OutputStream os = null;
+        try {
+            is = new FileInputStream(source);
+            os = new FileOutputStream(dest);
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = is.read(buffer)) > 0) {
+                os.write(buffer, 0, length);
+            }
+        } finally {
+            is.close();
+            os.close();
+        }
     }
 }
