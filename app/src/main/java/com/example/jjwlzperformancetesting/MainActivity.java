@@ -33,7 +33,6 @@ import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -45,7 +44,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 
@@ -483,25 +481,24 @@ public class MainActivity extends AppCompatActivity {
         }
     }
     
-    public void executeCmd(View v){
+    public void executeCmdPing(View v){
 
         System.out.println("@@실행됨");
 
-        TextView testResult = (TextView) findViewById(R.id.testResult);
-
-        String str = "ping -A -W 50 -c 2 223.62.93.226";
+        String str = "ping -A -W 50 -c 5 223.62.93.226";
 //        String str = "netperf -H 223.62.93.226 -l 100 -t TCP_RR -v 2 -- -o min_latency,mean_latency,max_latency,stddev_latency,transaction_rate";
 
         ShellExecutor se = new ShellExecutor();
-        testResult.setText(se.execute(str));
+        TextView result = (TextView) findViewById(R.id.pingResult);
+        result.setText(se.execute(str));
 
     }
 
-    public void executeCmdInstall (View v) throws IOException {
+    public void executeCmdIPerf(View v) throws IOException {
 
         String fileName = "iperf3";
         String fullName  = "/data/user/0/com.example.jjwlzperformancetesting/files/iperf3";
-        String commandStr = "";
+        String command = fullName + " -c 223.62.93.226  tcp -b 1G -t 2 –J -R";
         ShellExecutor se = new ShellExecutor();
 
         // app/assets/iperf3파일을 핸드폰으로 복사
@@ -511,8 +508,34 @@ public class MainActivity extends AppCompatActivity {
         se.execute("chmod 755 " + fullName);
 
         // iperf3 실행 "/data/user/0/com.example.jjwlzperformancetesting/files/iperf3  -c 223.62.93.226  udp -b 1G -t 2 –J -R"
-        commandStr = fullName + " -c 223.62.93.226  udp -b 1G -t 2 –J -R";
-        System.out.println(se.execute(commandStr));
+        String commandResult = se.execute2(command);
+        System.out.println("executeCmdIperf결과:   " + commandResult);
+
+        TextView result = (TextView) findViewById(R.id.iperfResult);
+        result.setText(commandResult);
+    }
+
+
+    public void executeCmdNetPerf(View v) throws IOException {
+
+        // app/assets/netperf 파일을 핸드폰으로 복사
+        String fileName = "netperf";
+        String fullName  = "/data/user/0/com.example.jjwlzperformancetesting/files/netperf";
+        String command = fullName + " -H 223.62.93.226 -l 50 -t UDP_RR -o mean_latency,min_latency,max_latency,p50_latency,p90_latency,p99_latency,stddev_latency";
+        ShellExecutor se = new ShellExecutor();
+
+        // app/assets/netperf 파일을 핸드폰으로 복사
+        copyAssets(fileName);
+
+        // 파일권한 변경 "chmod 755 /data/user/0/com.example.jjwlzperformancetesting/files/netperf"
+        se.execute("chmod 755 " + fullName);
+
+        // netperf 실행 "/data/user/0/com.example.jjwlzperformancetesting/files/netperf -H 223.62.93.226 -p 12865 -l -50 -t TCP_RR -j -- -o mean_latency,min_latency,max_latency,p50_latency,p90_latency,p99_latency,stddev_latency"
+        String commandResult = se.execute2(command);
+        System.out.println("executeCmdNetperf결과:   " + commandResult);
+
+        TextView result = (TextView) findViewById(R.id.netperfResult);
+        result.setText(commandResult);
 
     }
 
@@ -567,5 +590,63 @@ public class MainActivity extends AppCompatActivity {
             is.close();
             os.close();
         }
+    }
+
+    public void execCommand(View v) {
+
+        String fileName = "iperf3";
+        String fullName  = "/data/user/0/com.example.jjwlzperformancetesting/files/iperf3";
+        String commandStr = "";
+        ShellExecutor se = new ShellExecutor();
+
+        // app/assets/iperf3파일을 핸드폰으로 복사
+        try {
+            copyAssets(fileName);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // 파일권한 변경 "chmod 755 /data/user/0/com.example.jjwlzperformancetesting/files/iperf3"
+        se.execute("chmod 755 " + fullName);
+
+        // iperf3 실행 "/data/user/0/com.example.jjwlzperformancetesting/files/iperf3  -c 223.62.93.226  udp -b 1G -t 2 –J -R"
+//        commandStr = fullName + " -c 223.62.93.226  udp -b 1G -t 2 –J -R";
+//        System.out.println(se.execute(commandStr));
+
+        String[] command = {fullName, "-c", "223.62.93.226"};
+
+        new Thread(() -> {
+            try {
+                ProcessBuilder builder = new ProcessBuilder(command);
+                builder.redirectErrorStream(true);
+                final Process proc = builder.start();
+                GetOutput(proc);
+                /*
+                BufferedReader in = new BufferedReader(new InputStreamReader(proc.getInputStream()));
+                String s = null;
+                while ((s = in.readLine()) != null) {
+                    System.out.println(s);
+                }
+                */
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
+    private static void GetOutput(final Process process) {
+        new Thread() {
+            public void run() {
+                BufferedReader input = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                String line = null;
+                try {
+                    while ((line = input.readLine()) != null) {
+                        System.out.println(line);
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }.start();
     }
 }

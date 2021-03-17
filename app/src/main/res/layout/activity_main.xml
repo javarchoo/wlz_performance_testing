@@ -7,10 +7,32 @@
     tools:context=".MainActivity">
 
     <TextView
+        android:id="@+id/netperfResult"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="result"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/button" />
+
+    <Button
+        android:id="@+id/button2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:onClick="executeCmdNetPerf"
+        android:text="NetPerf Test"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.498"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/netperfResult" />
+
+    <TextView
         android:id="@+id/locationStr"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="10dp"
         android:textAlignment="center"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -39,7 +61,7 @@
         android:id="@+id/button3"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="10dp"
         android:onClick="getSignalStatus"
         android:text="SignalStatus Check"
         app:layout_constraintEnd_toEndOf="parent"
@@ -50,7 +72,7 @@
         android:id="@+id/signalStatusStr"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="10dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.501"
         app:layout_constraintStart_toStartOf="parent"
@@ -60,7 +82,7 @@
         android:id="@+id/networkMode"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="60dp"
+        android:layout_marginTop="20dp"
         android:layout_marginEnd="10dp"
         app:layout_constraintEnd_toStartOf="@+id/signalStrength"
         app:layout_constraintStart_toStartOf="parent"
@@ -71,7 +93,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="10dp"
-        android:layout_marginTop="60dp"
+        android:layout_marginTop="20dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/networkMode"
         app:layout_constraintTop_toBottomOf="@+id/getLocation" />
@@ -80,18 +102,29 @@
         android:id="@+id/runTest"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="83dp"
-        android:text="Test"
+        android:layout_marginTop="10dp"
+        android:onClick="executeCmdPing"
+        android:text="Latency(Ping) Test"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.507"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/button3"
-        android:onClick="executeCmd" />
+        app:layout_constraintTop_toBottomOf="@+id/pingResult" />
 
     <TextView
-        android:id="@+id/testResult"
+        android:id="@+id/pingResult"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="46dp"
+        android:layout_marginTop="20dp"
+        android:text="result"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/button3" />
+
+    <TextView
+        android:id="@+id/iperfResult"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
         android:text="result"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -101,11 +134,11 @@
         android:id="@+id/button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="70dp"
-        android:onClick="executeCmdInstall"
-        android:text="Button"
+        android:layout_marginTop="10dp"
+        android:onClick="executeCmdIPerf"
+        android:text="iPerf Test"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/testResult" />
+        app:layout_constraintTop_toBottomOf="@+id/iperfResult" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
