@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.IllegalFormatCodePointException;
 import java.util.Map;
 
 public class ShellExecutor {
@@ -13,9 +14,14 @@ public class ShellExecutor {
     }
 
     public String execute(String command) {
+        return execute(command, false);
+    }
+
+    public String execute(String command, boolean lastLineFlag) {
 
 
         StringBuffer output = new StringBuffer();
+        String lastLine = "";
 
         java.lang.Process proc;
         try {
@@ -27,6 +33,7 @@ public class ShellExecutor {
             String line = "";
             while ((line = reader.readLine()) != null) {
                 output.append(line + "\n");
+                lastLine = line;
             }
 
             System.out.println(output.toString());
@@ -39,7 +46,12 @@ public class ShellExecutor {
             e.printStackTrace();
         }
         System.out.println("@@실행완료");
-        return output.toString();
+
+        if(lastLineFlag) {
+            return lastLine;
+        } else {
+            return output.toString();
+        }
 
 /*
         String[] commands = {"/data/user/0/com.example.jjwlzperformancetesting/files/iperf3", "-c", "223.62.93.226"};
@@ -122,5 +134,4 @@ public class ShellExecutor {
         }
         return output.toString();
     }
-
 }

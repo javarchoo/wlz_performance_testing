@@ -481,42 +481,67 @@ public class MainActivity extends AppCompatActivity {
         }
     }
     
-    public void executeCmdPing(View v){
+    public void executePing(View v){
 
         System.out.println("@@실행됨");
 
-        String str = "ping -A -W 50 -c 5 223.62.93.226";
+        String command = "ping -A -W 50 -c 50 223.62.93.226";
 //        String str = "netperf -H 223.62.93.226 -l 100 -t TCP_RR -v 2 -- -o min_latency,mean_latency,max_latency,stddev_latency,transaction_rate";
 
         ShellExecutor se = new ShellExecutor();
-        TextView result = (TextView) findViewById(R.id.pingResult);
-        result.setText(se.execute(str));
+        String result = se.execute(command, true);
+
+        TextView tv = (TextView) findViewById(R.id.pingResult);
+        tv.setText(result);
 
     }
 
-    public void executeCmdIPerf(View v) throws IOException {
+    public void executeIperf(View v) throws IOException {
 
-        String fileName = "iperf3";
-        String fullName  = "/data/user/0/com.example.jjwlzperformancetesting/files/iperf3";
-        String command = fullName + " -c 223.62.93.226  tcp -b 1G -t 2 –J -R";
         ShellExecutor se = new ShellExecutor();
 
         // app/assets/iperf3파일을 핸드폰으로 복사
-        copyAssets(fileName);
+        copyAssets(IperfUtil.IPERF3);
 
         // 파일권한 변경 "chmod 755 /data/user/0/com.example.jjwlzperformancetesting/files/iperf3"
-        se.execute("chmod 755 " + fullName);
+        se.execute("chmod 755 " + IperfUtil.PATH + IperfUtil.IPERF3);
 
         // iperf3 실행 "/data/user/0/com.example.jjwlzperformancetesting/files/iperf3  -c 223.62.93.226  udp -b 1G -t 2 –J -R"
-        String commandResult = se.execute2(command);
-        System.out.println("executeCmdIperf결과:   " + commandResult);
+        // String results = se.execute2(IperfUtil.getUdpUploadCommand(IperfUtil.PUSAN));
+        String results = "";
+        String tcp_download = "";
+        String tcp_upload = "";
+        String udp_download = "";
+        String udp_upload = "";
 
-        TextView result = (TextView) findViewById(R.id.iperfResult);
-        result.setText(commandResult);
+        // TCP Download
+        results = se.execute(IperfUtil.getCommand(IperfUtil.PUSAN, IperfUtil.TCP, IperfUtil.DOWNLOAD));
+
+        tcp_download = IperfUtil.getBandwidth(results)[1];
+        System.out.println("TCP Download Bandwidth:   " + tcp_download);
+
+        // TCP Upload
+        results = se.execute(IperfUtil.getCommand(IperfUtil.PUSAN, IperfUtil.TCP, IperfUtil.UPLOAD));
+        tcp_upload = IperfUtil.getBandwidth(results)[0];
+        System.out.println("TCP Upload Bandwidth:   " + tcp_upload);
+
+        // UDP Download
+        results = se.execute(IperfUtil.getCommand(IperfUtil.PUSAN, IperfUtil.UDP, IperfUtil.DOWNLOAD));
+        udp_download = IperfUtil.getBandwidth(results)[1];
+        System.out.println("UDP Download Bandwidth:   " + udp_download);
+
+        // UDP Upload
+        results = se.execute(IperfUtil.getCommand(IperfUtil.PUSAN, IperfUtil.UDP, IperfUtil.UPLOAD));
+        udp_upload = IperfUtil.getBandwidth(results)[0];
+        System.out.println("UDP Upload Bandwidth:   " + udp_upload);
+
+        TextView tv = (TextView) findViewById(R.id.iperfResult);
+        tv.setText("TCP Download: " + tcp_download + "Mbits/sec, TCP Upload: " + tcp_upload + " Mbits/sec" + "\n"
+                 + "UDP Download: " + udp_download + "Mbits/sec, UDP Upload: " + udp_upload + " Mbits/sec");
     }
 
 
-    public void executeCmdNetPerf(View v) throws IOException {
+    public void executeNetperf(View v) throws IOException {
 
         // app/assets/netperf 파일을 핸드폰으로 복사
         String fileName = "netperf";
