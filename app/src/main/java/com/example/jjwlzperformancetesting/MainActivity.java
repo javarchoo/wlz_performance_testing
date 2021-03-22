@@ -52,7 +52,9 @@ import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
 
+    int progress = 0;
     ProgressBar simpleProgressBar;
+
     private GpsTracker gpsTracker;
     private static boolean IS_LTE = false;
     private static boolean IS_5G = false;
@@ -68,6 +70,13 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // initiate progress bar and start button
+        // visible the progress bar
+        // JJ Alreay did. set visiility false in properties.
+        // TODO
+        // simpleProgressBar = (ProgressBar) findViewById(R.id.progressBar1);
+        // simpleProgressBar.setVisibility(View.INVISIBLE);
 
         if (!checkLocationServicesStatus()) {
 
@@ -98,6 +107,20 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(MainActivity.this, "현재위치 \n위도 " + latitude + "\n경도 " + longitude, Toast.LENGTH_LONG).show();
             }
         });
+
+        // TODO 버튼 클릭 시 프로그레스바 표시, 오버라이드 되면 onClick시 iPerfTest 메소드를 실행하지 않고 오버라이드 내용만 수행해 버림...
+        /*
+        Button iperfButton = (Button) findViewById(R.id.iperfTest);
+        iperfButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View arg0) {
+                simpleProgressBar = (ProgressBar) findViewById(R.id.progressBar1);
+                simpleProgressBar.setVisibility(View.VISIBLE);
+                simpleProgressBar.setMax(40);
+                setProgressValue(progress);
+            }
+        });
+        */
     }
 
     /*
@@ -489,15 +512,31 @@ public class MainActivity extends AppCompatActivity {
 
         System.out.println("@@실행됨");
 
-        String command = "ping -A -W 50 -c 50 223.62.93.226";
-//        String str = "netperf -H 223.62.93.226 -l 100 -t TCP_RR -v 2 -- -o min_latency,mean_latency,max_latency,stddev_latency,transaction_rate";
+        String command = "ping -A -W 50 -c 50 ";
+        String resultsAvg = "";
+        String resultsMinMax = "";
+        String result = "";
 
-        ShellExecutor se = new ShellExecutor();
-        String result = se.execute(command, true);
+        String[] servers = {Const.DAEJEON, Const.PUSAN, Const.P_SEOUL};
+        String[] locations = {Const.DAEJEON_L, Const.PUSAN_L, Const.P_SEOUL_L};
+
+        for (int i = 0; i < servers.length; i++) {
+            ShellExecutor se = new ShellExecutor();
+            result = se.execute(command + servers[i], true);
+
+            String[] strs = result.split(",");
+            // strs 가공, average, min/max/mdev
+            String avg = strs[0].split("=")[1].split("/")[1];
+            String min = strs[0].split("=")[1].split("/")[0].trim();
+            String max = strs[0].split("=")[1].split("/")[2];
+            String mdev = strs[0].split("=")[1].split("/")[3].split(" ")[0].trim();
+
+            resultsAvg = resultsAvg + "[" + setRPad(locations[i], 13, " ") + "] avg=" + avg + "\n";
+            resultsMinMax = resultsMinMax + "[" + setRPad(locations[i], 13, " ") + "] min/max/mdev=" + min + "/" + max + "/" + mdev + "\n";
+        }
 
         TextView tv = (TextView) findViewById(R.id.pingResult);
-        tv.setText(result);
-
+        tv.setText(resultsAvg + "\n" + resultsMinMax);
     }
 
     public void executeIperf(View v) throws IOException {
