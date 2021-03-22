@@ -8,6 +8,7 @@ import androidx.core.content.ContextCompat;
 
 import android.Manifest;
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -33,6 +34,7 @@ import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ProgressBar;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
@@ -51,6 +53,9 @@ import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
 
+    int progress = 0;
+    ProgressBar simpleProgressBar;
+
     private GpsTracker gpsTracker;
     private static boolean IS_LTE = false;
     private static boolean IS_5G = false;
@@ -66,6 +71,12 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // initiate progress bar and start button
+        // visible the progress bar
+        // JJ Alreay did. set visiility false in properties.
+        // simpleProgressBar = (ProgressBar) findViewById(R.id.progressBar1);
+        // simpleProgressBar.setVisibility(View.INVISIBLE);
 
         if (!checkLocationServicesStatus()) {
 
@@ -96,6 +107,20 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(MainActivity.this, "현재위치 \n위도 " + latitude + "\n경도 " + longitude, Toast.LENGTH_LONG).show();
             }
         });
+
+        // TODO 버튼 클릭 시 프로그레스바 표시, 오버라이드 되면 onClick시 iPerfTest 메소드를 실행하지 않고 오버라이드 내용만 수행해 버림...
+        /*
+        Button iperfButton = (Button) findViewById(R.id.iperfTest);
+        iperfButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View arg0) {
+                simpleProgressBar = (ProgressBar) findViewById(R.id.progressBar1);
+                simpleProgressBar.setVisibility(View.VISIBLE);
+                simpleProgressBar.setMax(40);
+                setProgressValue(progress);
+            }
+        });
+        */
     }
 
     /*
@@ -495,7 +520,6 @@ public class MainActivity extends AppCompatActivity {
 
         TextView tv = (TextView) findViewById(R.id.pingResult);
         tv.setText(result);
-
     }
 
     public void executeIperf(View v) throws IOException {
@@ -709,5 +733,24 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }.start();
+    }
+
+    private void setProgressValue(final int progress) {
+
+        // set the progress
+        simpleProgressBar.setProgress(progress);
+        // thread is used to change the progress value
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                setProgressValue(progress + 1);
+            }
+        });
+        thread.start();
     }
 }
