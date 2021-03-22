@@ -552,34 +552,60 @@ public class MainActivity extends AppCompatActivity {
         // iperf3 실행 "/data/user/0/com.example.jjwlzperformancetesting/files/iperf3  -c 223.62.93.226  udp -b 1G -t 2 –J -R"
         // String results = se.execute2(IperfUtil.getUdpUploadCommand(IperfUtil.PUSAN));
         String resultTxt = "";
-        String tcp_download = "";
-        String tcp_upload = "";
-        String udp_download = "";
-        String udp_upload = "";
+        String results = null;
+        String tcp_download = null;
+        String tcp_upload = null;
+        String udp_download = null;
+        String udp_upload = null;
 
         String[] servers = {Const.DAEJEON, Const.PUSAN, Const.P_SEOUL};
         String[] locations = {Const.DAEJEON_L, Const.PUSAN_L, Const.P_SEOUL_L};
         for (int i = 0; i < servers.length; i++) {
-            String results = "";
+            // 변수 초기화
+            results = "";
+            tcp_download = "";
+            tcp_upload = "";
+            udp_download = "";
+            udp_upload = "";
+
             String server = servers[i];
 
             // TCP Download
+            results = "";
             results = se.execute(IperfUtil.getCommand(server, IperfUtil.TCP, IperfUtil.DOWNLOAD));
 
             tcp_download = IperfUtil.getBandwidth(results)[1];
             System.out.println("TCP Download Bandwidth:   " + tcp_download);
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
 
             // TCP Upload
+            results = "";
             results = se.execute(IperfUtil.getCommand(server, IperfUtil.TCP, IperfUtil.UPLOAD));
             tcp_upload = IperfUtil.getBandwidth(results)[0];
             System.out.println("TCP Upload Bandwidth:   " + tcp_upload);
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
 
             // UDP Download
+            results = "";
             results = se.execute(IperfUtil.getCommand(server, IperfUtil.UDP, IperfUtil.DOWNLOAD));
             udp_download = IperfUtil.getBandwidth(results)[1];
             System.out.println("UDP Download Bandwidth:   " + udp_download);
+            try {
+                Thread.sleep(3000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
 
             // UDP Upload
+            results = "";
             results = se.execute(IperfUtil.getCommand(server, IperfUtil.UDP, IperfUtil.UPLOAD));
             udp_upload = IperfUtil.getBandwidth(results)[0];
             System.out.println("UDP Upload Bandwidth:   " + udp_upload);

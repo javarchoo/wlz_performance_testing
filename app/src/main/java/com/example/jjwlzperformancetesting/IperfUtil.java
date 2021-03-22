@@ -65,27 +65,22 @@ public class IperfUtil {
      */
    public static String[] getBandwidth(String results) {
 
-        String[] res = {"", ""};
+       String[] res = {"", ""};
         String[] lines = results.split("\n");
         for (int i = 0; i < lines.length; i++) {
-
-            //TODO Delete
-            System.out.println("DEBUG: " + lines[i]);
 
             if (lines[i].contains(SENDER)) {
 
                 //TODO Delete
-                System.out.println("sender line: " + lines[i]);
+                System.out.println("@@@@@ sender line: " + lines[i]);
 
-                //res[0] = lines[i].split(" ")[12];
                 res[0] = pickUpBitrate(lines[i]);
             }
             if (lines[i].contains(RECEIVER)) {
 
                 //TODO Delete
-                System.out.println("receiver line: " + lines[i]);
+                System.out.println("@@@@@ receiver line: " + lines[i]);
 
-                //res[1] = lines[i].split(" ")[12];
                 res[1] = pickUpBitrate(lines[i]);
             }
         }
@@ -98,9 +93,6 @@ public class IperfUtil {
     }
 
     private static String pickUpBitrate (String line) {
-
-       System.out.println(line.split("Mbits")[0]);
-       System.out.println(line.split("Mbits")[0].split("MBytes")[1]);
 
        return line.split("Mbits")[0].split("MBytes")[1].trim();
     }
