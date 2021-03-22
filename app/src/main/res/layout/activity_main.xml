@@ -29,15 +29,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/rgNetwork" />
 
-    <TextView
-        android:id="@+id/locationInfo"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="r"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/locationStr" />
-
     <Button
         android:id="@+id/button3"
         android:layout_width="wrap_content"
@@ -48,7 +39,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.488"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/locationInfo" />
+        app:layout_constraintTop_toBottomOf="@+id/locationStr" />
 
     <TextView
         android:id="@+id/signalStatusStr"
@@ -101,6 +92,7 @@
         android:layout_marginTop="8dp"
         android:fontFamily="monospace"
         android:text=" "
+        android:textSize="12sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.504"
         app:layout_constraintStart_toStartOf="parent"
@@ -113,6 +105,7 @@
         android:layout_marginTop="8dp"
         android:fontFamily="monospace"
         android:text=" "
+        android:textSize="12sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.504"
         app:layout_constraintStart_toStartOf="parent"
@@ -133,7 +126,7 @@
         android:id="@+id/button4"
         android:layout_width="116dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
+        android:layout_marginTop="8dp"
         android:onClick="sendData"
         android:text="Send Data"
         app:layout_constraintEnd_toEndOf="parent"

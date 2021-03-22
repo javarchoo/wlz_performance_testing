@@ -87,8 +87,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
         final TextView textview_address = (TextView) findViewById(R.id.locationStr);
-        final TextView testview_location = (TextView) findViewById(R.id.locationInfo);
-
 
         Button ShowLocationButton = (Button) findViewById(R.id.getLocation);
         ShowLocationButton.setOnClickListener(new View.OnClickListener() {
@@ -100,9 +98,7 @@ public class MainActivity extends AppCompatActivity {
                 double longitude = gpsTracker.getLongitude();
 
                 String address = getCurrentAddress(latitude, longitude);
-                textview_address.setText(address);
-
-                testview_location.setText("위도: " + latitude + ",  경도: " + longitude);
+                textview_address.setText(address + "\n" + "위도: " + latitude + ",  경도: " + longitude);
 
                 Toast.makeText(MainActivity.this, "현재위치 \n위도 " + latitude + "\n경도 " + longitude, Toast.LENGTH_LONG).show();
             }
@@ -247,7 +243,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         Address address = addresses.get(0);
-        return address.getAddressLine(0).toString() + "\n";
+        return address.getAddressLine(0).toString();
 
     }
 
@@ -561,7 +557,7 @@ public class MainActivity extends AppCompatActivity {
         String[] servers = {Const.DAEJEON, Const.PUSAN, Const.P_SEOUL};
         String[] locations = {Const.DAEJEON_L, Const.PUSAN_L, Const.P_SEOUL_L};
         for (int i = 0; i < servers.length; i++) {
-            // 변수 초기화
+            // 변수 초기
             results = "";
             tcp_download = "";
             tcp_upload = "";
@@ -646,8 +642,8 @@ public class MainActivity extends AppCompatActivity {
     public void sendData(View v) {
         TextView tv = null;
 
-        tv = (TextView)findViewById(R.id.locationInfo);
-        String locationInfo = tv.getText().toString();
+        tv = (TextView)findViewById(R.id.locationStr);
+        String locationStr = tv.getText().toString();
 
         tv = (TextView)findViewById(R.id.networkMode);
         String networkMode = tv.getText().toString();
@@ -667,7 +663,7 @@ public class MainActivity extends AppCompatActivity {
         String selectedNetwork = ((RadioButton)findViewById(((RadioGroup) findViewById(R.id.rgNetwork)).getCheckedRadioButtonId())).getText().toString();
         String selectedInout = ((RadioButton)findViewById(((RadioGroup) findViewById(R.id.rgInout)).getCheckedRadioButtonId())).getText().toString();
 
-        System.out.println(locationInfo);
+        System.out.println(locationStr);
         System.out.println(networkMode);
         System.out.println(signalStrength);
         System.out.println(signalStatus);
