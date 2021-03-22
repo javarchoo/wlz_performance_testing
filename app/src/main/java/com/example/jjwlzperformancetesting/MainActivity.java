@@ -531,8 +531,8 @@ public class MainActivity extends AppCompatActivity {
             String max = strs[0].split("=")[1].split("/")[2];
             String mdev = strs[0].split("=")[1].split("/")[3].split(" ")[0].trim();
 
-            resultsAvg = resultsAvg + "[" + setRPad(locations[i], 13, " ") + "] avg=" + avg + "\n";
-            resultsMinMax = resultsMinMax + "[" + setRPad(locations[i], 13, " ") + "] min/max/mdev=" + min + "/" + max + "/" + mdev + "\n";
+            resultsAvg = resultsAvg + "[" + setRPad(locations[i], 13, " ") + "] avg = " + avg + "\n";
+            resultsMinMax = resultsMinMax + "[" + setRPad(locations[i], 13, " ") + "] min/max/mdev = " + min.split("\\.")[0] + "/" + max.split("\\.")[0] + "/" + mdev.split("\\.")[0] + "\n";
         }
 
         TextView tv = (TextView) findViewById(R.id.pingResult);
