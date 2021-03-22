@@ -33,6 +33,8 @@ import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -540,7 +542,7 @@ public class MainActivity extends AppCompatActivity {
                  + "UDP Download: " + udp_download + "Mbits/sec, UDP Upload: " + udp_upload + " Mbits/sec");
     }
 
-
+/*
     public void executeNetperf(View v) throws IOException {
 
         // app/assets/netperf 파일을 핸드폰으로 복사
@@ -559,9 +561,43 @@ public class MainActivity extends AppCompatActivity {
         String commandResult = se.execute2(command);
         System.out.println("executeCmdNetperf결과:   " + commandResult);
 
-        TextView result = (TextView) findViewById(R.id.netperfResult);
-        result.setText(commandResult);
+        TextView tv = (TextView) findViewById(R.id.netperfResult);
+        tv.setText(commandResult);
 
+    }*/
+
+    public void sendData(View v) {
+        TextView tv = null;
+
+        tv = (TextView)findViewById(R.id.locationInfo);
+        String locationInfo = tv.getText().toString();
+
+        tv = (TextView)findViewById(R.id.networkMode);
+        String networkMode = tv.getText().toString();
+
+        tv = (TextView)findViewById(R.id.signalStrength);
+        String signalStrength = tv.getText().toString();
+
+        tv = (TextView)findViewById(R.id.signalStatusStr);
+        String signalStatus = tv.getText().toString();
+
+        tv = (TextView)findViewById(R.id.pingResult);
+        String pingResult = tv.getText().toString();
+
+        tv = (TextView)findViewById(R.id.iperfResult);
+        String iperfResult = tv.getText().toString();
+
+        String selectedNetwork = ((RadioButton)findViewById(((RadioGroup) findViewById(R.id.rgNetwork)).getCheckedRadioButtonId())).getText().toString();
+        String selectedInout = ((RadioButton)findViewById(((RadioGroup) findViewById(R.id.rgInout)).getCheckedRadioButtonId())).getText().toString();
+
+        System.out.println(locationInfo);
+        System.out.println(networkMode);
+        System.out.println(signalStrength);
+        System.out.println(signalStatus);
+        System.out.println(pingResult);
+        System.out.println(iperfResult);
+        System.out.println(selectedNetwork);
+        System.out.println(selectedInout);
     }
 
     private void copyAssets(String filename) throws IOException {
