@@ -33,6 +33,7 @@ import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ProgressBar;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
@@ -51,6 +52,7 @@ import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
 
+    ProgressBar simpleProgressBar;
     private GpsTracker gpsTracker;
     private static boolean IS_LTE = false;
     private static boolean IS_5G = false;
@@ -506,7 +508,7 @@ public class MainActivity extends AppCompatActivity {
         copyAssets(IperfUtil.IPERF3);
 
         // 파일권한 변경 "chmod 755 /data/user/0/com.example.jjwlzperformancetesting/files/iperf3"
-        se.execute("chmod 755 " + IperfUtil.PATH + IperfUtil.IPERF3);
+        se.execute("chmod 755 " + Const.PATH + IperfUtil.IPERF3);
 
         // iperf3 실행 "/data/user/0/com.example.jjwlzperformancetesting/files/iperf3  -c 223.62.93.226  udp -b 1G -t 2 –J -R"
         // String results = se.execute2(IperfUtil.getUdpUploadCommand(IperfUtil.PUSAN));
@@ -517,23 +519,23 @@ public class MainActivity extends AppCompatActivity {
         String udp_upload = "";
 
         // TCP Download
-        results = se.execute(IperfUtil.getCommand(IperfUtil.PUSAN, IperfUtil.TCP, IperfUtil.DOWNLOAD));
+        results = se.execute(IperfUtil.getCommand(Const.PUSAN, IperfUtil.TCP, IperfUtil.DOWNLOAD));
 
         tcp_download = IperfUtil.getBandwidth(results)[1];
         System.out.println("TCP Download Bandwidth:   " + tcp_download);
 
         // TCP Upload
-        results = se.execute(IperfUtil.getCommand(IperfUtil.PUSAN, IperfUtil.TCP, IperfUtil.UPLOAD));
+        results = se.execute(IperfUtil.getCommand(Const.PUSAN, IperfUtil.TCP, IperfUtil.UPLOAD));
         tcp_upload = IperfUtil.getBandwidth(results)[0];
         System.out.println("TCP Upload Bandwidth:   " + tcp_upload);
 
         // UDP Download
-        results = se.execute(IperfUtil.getCommand(IperfUtil.PUSAN, IperfUtil.UDP, IperfUtil.DOWNLOAD));
+        results = se.execute(IperfUtil.getCommand(Const.PUSAN, IperfUtil.UDP, IperfUtil.DOWNLOAD));
         udp_download = IperfUtil.getBandwidth(results)[1];
         System.out.println("UDP Download Bandwidth:   " + udp_download);
 
         // UDP Upload
-        results = se.execute(IperfUtil.getCommand(IperfUtil.PUSAN, IperfUtil.UDP, IperfUtil.UPLOAD));
+        results = se.execute(IperfUtil.getCommand(Const.PUSAN, IperfUtil.UDP, IperfUtil.UPLOAD));
         udp_upload = IperfUtil.getBandwidth(results)[0];
         System.out.println("UDP Upload Bandwidth:   " + udp_upload);
 
