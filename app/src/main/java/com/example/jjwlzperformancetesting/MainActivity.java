@@ -8,7 +8,6 @@ import androidx.core.content.ContextCompat;
 
 import android.Manifest;
 import android.app.AlertDialog;
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -34,7 +33,6 @@ import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ProgressBar;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
@@ -53,9 +51,6 @@ import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
 
-    int progress = 0;
-    ProgressBar simpleProgressBar;
-
     private GpsTracker gpsTracker;
     private static boolean IS_LTE = false;
     private static boolean IS_5G = false;
@@ -71,12 +66,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        // initiate progress bar and start button
-        // visible the progress bar
-        // JJ Alreay did. set visiility false in properties.
-        // simpleProgressBar = (ProgressBar) findViewById(R.id.progressBar1);
-        // simpleProgressBar.setVisibility(View.INVISIBLE);
 
         if (!checkLocationServicesStatus()) {
 
@@ -107,20 +96,6 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(MainActivity.this, "현재위치 \n위도 " + latitude + "\n경도 " + longitude, Toast.LENGTH_LONG).show();
             }
         });
-
-        // TODO 버튼 클릭 시 프로그레스바 표시, 오버라이드 되면 onClick시 iPerfTest 메소드를 실행하지 않고 오버라이드 내용만 수행해 버림...
-        /*
-        Button iperfButton = (Button) findViewById(R.id.iperfTest);
-        iperfButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View arg0) {
-                simpleProgressBar = (ProgressBar) findViewById(R.id.progressBar1);
-                simpleProgressBar.setVisibility(View.VISIBLE);
-                simpleProgressBar.setMax(40);
-                setProgressValue(progress);
-            }
-        });
-        */
     }
 
     /*
@@ -512,31 +487,15 @@ public class MainActivity extends AppCompatActivity {
 
         System.out.println("@@실행됨");
 
-        String command = "ping -A -W 50 -c 50 ";
-        String resultsAvg = "";
-        String resultsMinMax = "";
-        String result = "";
+        String command = "ping -A -W 50 -c 50 223.62.93.226";
+//        String str = "netperf -H 223.62.93.226 -l 100 -t TCP_RR -v 2 -- -o min_latency,mean_latency,max_latency,stddev_latency,transaction_rate";
 
-        String[] servers = {Const.DAEJEON, Const.PUSAN, Const.P_SEOUL};
-        String[] locations = {Const.DAEJEON_L, Const.PUSAN_L, Const.P_SEOUL_L};
-
-        for (int i = 0; i < servers.length; i++) {
-            ShellExecutor se = new ShellExecutor();
-            result = se.execute(command + servers[i], true);
-
-            String[] strs = result.split(",");
-            // strs 가공, average, min/max/mdev
-            String avg = strs[0].split("=")[1].split("/")[1];
-            String min = strs[0].split("=")[1].split("/")[0].trim();
-            String max = strs[0].split("=")[1].split("/")[2];
-            String mdev = strs[0].split("=")[1].split("/")[3].split(" ")[0].trim();
-
-            resultsAvg = resultsAvg + "[" + setRPad(locations[i], 13, " ") + "] avg=" + avg + "\n";
-            resultsMinMax = resultsMinMax + "[" + setRPad(locations[i], 13, " ") + "] min/max/mdev=" + min + "/" + max + "/" + mdev + "\n";
-        }
+        ShellExecutor se = new ShellExecutor();
+        String result = se.execute(command, true);
 
         TextView tv = (TextView) findViewById(R.id.pingResult);
-        tv.setText(resultsAvg + "\n" + resultsMinMax);
+        tv.setText(result);
+
     }
 
     public void executeIperf(View v) throws IOException {
@@ -547,7 +506,7 @@ public class MainActivity extends AppCompatActivity {
         copyAssets(IperfUtil.IPERF3);
 
         // 파일권한 변경 "chmod 755 /data/user/0/com.example.jjwlzperformancetesting/files/iperf3"
-        se.execute("chmod 755 " + Const.PATH + IperfUtil.IPERF3);
+        se.execute("chmod 755 " + IperfUtil.PATH + IperfUtil.IPERF3);
 
         // iperf3 실행 "/data/user/0/com.example.jjwlzperformancetesting/files/iperf3  -c 223.62.93.226  udp -b 1G -t 2 –J -R"
         // String results = se.execute2(IperfUtil.getUdpUploadCommand(IperfUtil.PUSAN));
@@ -558,23 +517,23 @@ public class MainActivity extends AppCompatActivity {
         String udp_upload = "";
 
         // TCP Download
-        results = se.execute(IperfUtil.getCommand(Const.PUSAN, IperfUtil.TCP, IperfUtil.DOWNLOAD));
+        results = se.execute(IperfUtil.getCommand(IperfUtil.PUSAN, IperfUtil.TCP, IperfUtil.DOWNLOAD));
 
         tcp_download = IperfUtil.getBandwidth(results)[1];
         System.out.println("TCP Download Bandwidth:   " + tcp_download);
 
         // TCP Upload
-        results = se.execute(IperfUtil.getCommand(Const.PUSAN, IperfUtil.TCP, IperfUtil.UPLOAD));
+        results = se.execute(IperfUtil.getCommand(IperfUtil.PUSAN, IperfUtil.TCP, IperfUtil.UPLOAD));
         tcp_upload = IperfUtil.getBandwidth(results)[0];
         System.out.println("TCP Upload Bandwidth:   " + tcp_upload);
 
         // UDP Download
-        results = se.execute(IperfUtil.getCommand(Const.PUSAN, IperfUtil.UDP, IperfUtil.DOWNLOAD));
+        results = se.execute(IperfUtil.getCommand(IperfUtil.PUSAN, IperfUtil.UDP, IperfUtil.DOWNLOAD));
         udp_download = IperfUtil.getBandwidth(results)[1];
         System.out.println("UDP Download Bandwidth:   " + udp_download);
 
         // UDP Upload
-        results = se.execute(IperfUtil.getCommand(Const.PUSAN, IperfUtil.UDP, IperfUtil.UPLOAD));
+        results = se.execute(IperfUtil.getCommand(IperfUtil.PUSAN, IperfUtil.UDP, IperfUtil.UPLOAD));
         udp_upload = IperfUtil.getBandwidth(results)[0];
         System.out.println("UDP Upload Bandwidth:   " + udp_upload);
 
