@@ -512,14 +512,31 @@ public class MainActivity extends AppCompatActivity {
 
         System.out.println("@@실행됨");
 
-        String command = "ping -A -W 50 -c 50 223.62.93.226";
-//        String str = "netperf -H 223.62.93.226 -l 100 -t TCP_RR -v 2 -- -o min_latency,mean_latency,max_latency,stddev_latency,transaction_rate";
+        String command = "ping -A -W 50 -c 50 ";
+        String resultsAvg = "";
+        String resultsMinMax = "";
+        String result = "";
 
-        ShellExecutor se = new ShellExecutor();
-        String result = se.execute(command, true);
+        String[] servers = {Const.DAEJEON, Const.PUSAN, Const.P_SEOUL};
+        String[] locations = {Const.DAEJEON_L, Const.PUSAN_L, Const.P_SEOUL_L};
+
+        for (int i = 0; i < servers.length; i++) {
+            ShellExecutor se = new ShellExecutor();
+            result = se.execute(command + servers[i], true);
+
+            String[] strs = result.split(",");
+            // strs 가공, average, min/max/mdev
+            String avg = strs[0].split("=")[1].split("/")[1];
+            String min = strs[0].split("=")[1].split("/")[0].trim();
+            String max = strs[0].split("=")[1].split("/")[2];
+            String mdev = strs[0].split("=")[1].split("/")[3].split(" ")[0].trim();
+
+            resultsAvg = resultsAvg + "[" + setRPad(locations[i], 13, " ") + "] avg=" + avg + "\n";
+            resultsMinMax = resultsMinMax + "[" + setRPad(locations[i], 13, " ") + "] min/max/mdev=" + min + "/" + max + "/" + mdev + "\n";
+        }
 
         TextView tv = (TextView) findViewById(R.id.pingResult);
-        tv.setText(result);
+        tv.setText(resultsAvg + "\n" + resultsMinMax);
     }
 
     public void executeIperf(View v) throws IOException {
@@ -530,7 +547,7 @@ public class MainActivity extends AppCompatActivity {
         copyAssets(IperfUtil.IPERF3);
 
         // 파일권한 변경 "chmod 755 /data/user/0/com.example.jjwlzperformancetesting/files/iperf3"
-        se.execute("chmod 755 " + IperfUtil.PATH + IperfUtil.IPERF3);
+        se.execute("chmod 755 " + Const.PATH + IperfUtil.IPERF3);
 
         // iperf3 실행 "/data/user/0/com.example.jjwlzperformancetesting/files/iperf3  -c 223.62.93.226  udp -b 1G -t 2 –J -R"
         // String results = se.execute2(IperfUtil.getUdpUploadCommand(IperfUtil.PUSAN));
@@ -541,23 +558,23 @@ public class MainActivity extends AppCompatActivity {
         String udp_upload = "";
 
         // TCP Download
-        results = se.execute(IperfUtil.getCommand(IperfUtil.PUSAN, IperfUtil.TCP, IperfUtil.DOWNLOAD));
+        results = se.execute(IperfUtil.getCommand(Const.PUSAN, IperfUtil.TCP, IperfUtil.DOWNLOAD));
 
         tcp_download = IperfUtil.getBandwidth(results)[1];
         System.out.println("TCP Download Bandwidth:   " + tcp_download);
 
         // TCP Upload
-        results = se.execute(IperfUtil.getCommand(IperfUtil.PUSAN, IperfUtil.TCP, IperfUtil.UPLOAD));
+        results = se.execute(IperfUtil.getCommand(Const.PUSAN, IperfUtil.TCP, IperfUtil.UPLOAD));
         tcp_upload = IperfUtil.getBandwidth(results)[0];
         System.out.println("TCP Upload Bandwidth:   " + tcp_upload);
 
         // UDP Download
-        results = se.execute(IperfUtil.getCommand(IperfUtil.PUSAN, IperfUtil.UDP, IperfUtil.DOWNLOAD));
+        results = se.execute(IperfUtil.getCommand(Const.PUSAN, IperfUtil.UDP, IperfUtil.DOWNLOAD));
         udp_download = IperfUtil.getBandwidth(results)[1];
         System.out.println("UDP Download Bandwidth:   " + udp_download);
 
         // UDP Upload
-        results = se.execute(IperfUtil.getCommand(IperfUtil.PUSAN, IperfUtil.UDP, IperfUtil.UPLOAD));
+        results = se.execute(IperfUtil.getCommand(Const.PUSAN, IperfUtil.UDP, IperfUtil.UPLOAD));
         udp_upload = IperfUtil.getBandwidth(results)[0];
         System.out.println("UDP Upload Bandwidth:   " + udp_upload);
 
@@ -752,5 +769,18 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         thread.start();
+    }
+
+    // RPAD
+    private static String setRPad( String strContext, int iLen, String strChar ) {
+        String strResult = "";
+        StringBuilder sbAddChar = new StringBuilder();
+        for( int i = strContext.length(); i < iLen; i++ ) {
+            // iLen길이 만큼 strChar문자로 채운다.
+            sbAddChar.append( strChar );
+        }
+        // RPAD이므로, 채울문자열 + 원래문자열로 Concate한다.
+        strResult =  strContext + sbAddChar;
+        return strResult;
     }
 }

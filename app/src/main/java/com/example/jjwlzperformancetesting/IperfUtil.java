@@ -2,10 +2,6 @@ package com.example.jjwlzperformancetesting;
 
 public class IperfUtil {
     public static final String IPERF3 = "iperf3";
-    public static final String PATH = "/data/user/0/com.example.jjwlzperformancetesting/files/";
-    // TODO change ip address
-    public static final String DAEJEON = "223.62.93.226";
-    public static final String PUSAN = "223.62.93.226";
 
     public static final String TCP = "tcp";
     public static final String UDP = "udp";
@@ -48,7 +44,7 @@ public class IperfUtil {
     }
 
     public static String getCommand(String region, String protocol, int port, String bitrate, int time, String format) {
-        return PATH + IPERF3
+        return Const.PATH + IPERF3
                 + " -c " + region
                 + " -p " + port
                 + " " + protocol
