@@ -39,6 +39,12 @@ import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.amplifyframework.AmplifyException;
+import com.amplifyframework.api.aws.AWSApiPlugin;
+import com.amplifyframework.core.Amplify;
+import com.amplifyframework.datastore.AWSDataStorePlugin;
+import com.amplifyframework.datastore.generated.model.WavelengthPerformanceResult;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -51,6 +57,25 @@ import java.util.List;
 import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
+
+    // 전역변수 선언
+    String selectedNetwork = "";
+    String selectedInout = "";
+    String location = "";
+    String locationNm = "";
+    String radioNetwork = "";
+    String radioStrength = "";
+    String radioStatus = "";
+    String[] servers = {Const.DAEJEON, Const.PUSAN, Const.P_SEOUL};
+    String[] serversNm = {Const.DAEJEON_L, Const.PUSAN_L, Const.P_SEOUL_L};
+    String[] latencyAvg = {"", "", ""};
+    String[] latencyMin = {"", "", ""};
+    String[] latencyMax = {"", "", ""};
+    String[] latencyMdev = {"", "", ""};
+    String[] tputTcpDown = {"", "", ""};
+    String[] tputTcpUp = {"", "", ""};
+    String[] tputUdpDown = {"", "", ""};
+    String[] tputUdpUp = {"", "", ""};
 
     int progress = 0;
     ProgressBar simpleProgressBar;
@@ -70,6 +95,15 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        try {
+            Amplify.addPlugin(new AWSApiPlugin()); // UNCOMMENT this line once backend is deployed
+            Amplify.addPlugin(new AWSDataStorePlugin());
+            Amplify.configure(getApplicationContext());
+            Log.i("Amplify", "Initialized Amplify");
+        } catch (AmplifyException error) {
+            Log.e("Amplify", "Could not initialize Amplify", error);
+        }
 
         // initiate progress bar and start button
         // visible the progress bar
@@ -513,12 +547,9 @@ public class MainActivity extends AppCompatActivity {
         String resultsMinMax = "";
         String result = "";
 
-        String[] servers = {Const.DAEJEON, Const.PUSAN, Const.P_SEOUL};
-        String[] locations = {Const.DAEJEON_L, Const.PUSAN_L, Const.P_SEOUL_L};
-
-        for (int i = 0; i < servers.length; i++) {
+        for (int i = 0; i < this.servers.length; i++) {
             ShellExecutor se = new ShellExecutor();
-            result = se.execute(command + servers[i], true);
+            result = se.execute(command + this.servers[i], true);
 
             String[] strs = result.split(",");
             // strs 가공, average, min/max/mdev
@@ -527,8 +558,13 @@ public class MainActivity extends AppCompatActivity {
             String max = strs[0].split("=")[1].split("/")[2];
             String mdev = strs[0].split("=")[1].split("/")[3].split(" ")[0].trim();
 
-            resultsAvg = resultsAvg + "[" + setRPad(locations[i], 13, " ") + "] avg = " + avg + "\n";
-            resultsMinMax = resultsMinMax + "[" + setRPad(locations[i], 13, " ") + "] min/max/mdev = " + min.split("\\.")[0] + "/" + max.split("\\.")[0] + "/" + mdev.split("\\.")[0] + "\n";
+            this.latencyAvg[i] = avg;
+            this.latencyMin[i] = min;
+            this.latencyMax[i] = max;
+            this.latencyMdev[i] = mdev;
+
+            resultsAvg = resultsAvg + "[" + setRPad(serversNm[i], 13, " ") + "] avg = " + avg + "\n";
+            resultsMinMax = resultsMinMax + "[" + setRPad(serversNm[i], 13, " ") + "] min/max/mdev = " + min.split("\\.")[0] + "/" + max.split("\\.")[0] + "/" + mdev.split("\\.")[0] + "\n";
         }
 
         TextView tv = (TextView) findViewById(R.id.pingResult);
@@ -554,9 +590,7 @@ public class MainActivity extends AppCompatActivity {
         String udp_download = null;
         String udp_upload = null;
 
-        String[] servers = {Const.DAEJEON, Const.PUSAN, Const.P_SEOUL};
-        String[] locations = {Const.DAEJEON_L, Const.PUSAN_L, Const.P_SEOUL_L};
-        for (int i = 0; i < servers.length; i++) {
+        for (int i = 0; i < this.servers.length; i++) {
             // 변수 초기
             results = "";
             tcp_download = "";
@@ -564,7 +598,7 @@ public class MainActivity extends AppCompatActivity {
             udp_download = "";
             udp_upload = "";
 
-            String server = servers[i];
+            String server = this.servers[i];
 
             // TCP Download
             results = "";
@@ -606,7 +640,12 @@ public class MainActivity extends AppCompatActivity {
             udp_upload = IperfUtil.getBandwidth(results)[0];
             System.out.println("UDP Upload Bandwidth:   " + udp_upload);
 
-            resultTxt = resultTxt + "[" + setRPad(locations[i], 13, " ") + "]" + "\n"
+            this.tputTcpDown[i] = tcp_download;
+            this.tputTcpUp[i] = tcp_upload;
+            this.tputUdpDown[i] = udp_download;
+            this.tputUdpUp[i] = udp_upload;
+
+            resultTxt = resultTxt + "[" + setRPad(serversNm[i], 13, " ") + "]" + "\n"
                     + "TCP Download: " + tcp_download + "Mbits/sec, TCP Upload: " + tcp_upload + " Mbits/sec" + "\n"
                     + "UDP Download: " + udp_download + "Mbits/sec, UDP Upload: " + udp_upload + " Mbits/sec" + "\n";
         }
@@ -640,28 +679,36 @@ public class MainActivity extends AppCompatActivity {
     }*/
 
     public void sendData(View v) {
+
+        String selectedNetwork = ((RadioButton)findViewById(((RadioGroup) findViewById(R.id.rgNetwork)).getCheckedRadioButtonId())).getText().toString();
+        String selectedInout = ((RadioButton)findViewById(((RadioGroup) findViewById(R.id.rgInout)).getCheckedRadioButtonId())).getText().toString();
+        this.selectedNetwork = selectedNetwork;
+        this.selectedInout = selectedInout;
+
         TextView tv = null;
 
         tv = (TextView)findViewById(R.id.locationStr);
         String locationStr = tv.getText().toString();
+        this.location = tv.getText().toString().split("\n")[1].replaceAll("위도: ", "").replaceAll("경도: ", "").trim();
+        this.locationNm = tv.getText().toString().split("\n")[0];
 
         tv = (TextView)findViewById(R.id.networkMode);
         String networkMode = tv.getText().toString();
+        this.radioNetwork = tv.getText().toString().replaceAll("Network Mode: ", "");
 
         tv = (TextView)findViewById(R.id.signalStrength);
         String signalStrength = tv.getText().toString();
+        this.radioStrength = tv.getText().toString();
 
         tv = (TextView)findViewById(R.id.signalStatusStr);
         String signalStatus = tv.getText().toString();
+        this.radioStatus = tv.getText().toString().replaceAll("Signal Strength: ", ""). replaceAll(" dBm", "");
 
         tv = (TextView)findViewById(R.id.pingResult);
         String pingResult = tv.getText().toString();
 
         tv = (TextView)findViewById(R.id.iperfResult);
         String iperfResult = tv.getText().toString();
-
-        String selectedNetwork = ((RadioButton)findViewById(((RadioGroup) findViewById(R.id.rgNetwork)).getCheckedRadioButtonId())).getText().toString();
-        String selectedInout = ((RadioButton)findViewById(((RadioGroup) findViewById(R.id.rgInout)).getCheckedRadioButtonId())).getText().toString();
 
         System.out.println(locationStr);
         System.out.println(networkMode);
@@ -671,6 +718,8 @@ public class MainActivity extends AppCompatActivity {
         System.out.println(iperfResult);
         System.out.println(selectedNetwork);
         System.out.println(selectedInout);
+
+        create();
     }
 
     private void copyAssets(String filename) throws IOException {
@@ -814,5 +863,34 @@ public class MainActivity extends AppCompatActivity {
         // RPAD이므로, 채울문자열 + 원래문자열로 Concate한다.
         strResult =  strContext + sbAddChar;
         return strResult;
+    }
+
+    private void create() {
+        for (int i = 0; i < servers.length; i++) {
+            WavelengthPerformanceResult item = WavelengthPerformanceResult.builder()
+                    .location(this.location)
+                    .locationNm(this.locationNm)
+                    .selectedNetwork(this.selectedNetwork)
+                    .selectedInout(this.selectedInout)
+                    .radioNetwork(this.radioNetwork)
+                    .radioStrength(this.radioStrength)
+                    .radioStatus(this.radioStatus)
+                    .server(this.servers[i])
+                    .serverNm(this.serversNm[i])
+                    .latencyAvg(this.latencyAvg[i])
+                    .latencyMax(this.latencyMax[i])
+                    .latencyMin(this.latencyMin[i])
+                    .latencyMdev(this.latencyMdev[i])
+                    .tputTcpUp(this.tputTcpDown[i])
+                    .tputTcpDown(this.tputTcpUp[i])
+                    .tputUdpUp(this.tputUdpDown[i])
+                    .tputUdpDown(this.tputUdpUp[i])
+                    .build();
+            Amplify.DataStore.save(
+                    item,
+                    success -> Log.i("Amplify", "Saved item: " + success.item().getId()),
+                    error -> Log.e("Amplify", "Could not save item to DataStore", error)
+            );
+        }
     }
 }
