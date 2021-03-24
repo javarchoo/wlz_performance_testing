@@ -42,6 +42,7 @@ import android.widget.Toast;
 import com.amplifyframework.AmplifyException;
 import com.amplifyframework.api.aws.AWSApiPlugin;
 import com.amplifyframework.core.Amplify;
+import com.amplifyframework.core.AmplifyConfiguration;
 import com.amplifyframework.datastore.AWSDataStorePlugin;
 import com.amplifyframework.datastore.generated.model.WavelengthPerformanceResult;
 
@@ -99,6 +100,7 @@ public class MainActivity extends AppCompatActivity {
         try {
             Amplify.addPlugin(new AWSApiPlugin()); // UNCOMMENT this line once backend is deployed
             Amplify.addPlugin(new AWSDataStorePlugin());
+            AmplifyConfiguration.builder(getApplicationContext()).devMenuEnabled(false).build();
             Amplify.configure(getApplicationContext());
             Log.i("Amplify", "Initialized Amplify");
         } catch (AmplifyException error) {
