@@ -214,4 +214,14 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/progressBar1" />
 
+    <ToggleButton
+        android:id="@+id/boostZone"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:textOff="OFF"
+        android:textOn="5GX B.Z."
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/rgNetwork" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

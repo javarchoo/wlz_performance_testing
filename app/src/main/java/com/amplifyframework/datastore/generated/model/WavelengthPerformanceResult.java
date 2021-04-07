@@ -43,7 +43,8 @@ public final class WavelengthPerformanceResult implements Model {
   public static final QueryField TPUT_TCP_DOWN = field("WavelengthPerformanceResult", "tput_tcp_down");
   public static final QueryField TPUT_UDP_UP = field("WavelengthPerformanceResult", "tput_udp_up");
   public static final QueryField TPUT_UDP_DOWN = field("WavelengthPerformanceResult", "tput_udp_down");
-  */
+  public static final QueryField SELECTED_BOOSTZONE = field("WavelengthPerformanceResult", "selected_boostzone");
+ */
   private final @ModelField(targetType="ID", isRequired = true) String id;
   private final @ModelField(targetType="String") String location;
   private final @ModelField(targetType="String") String location_nm;
@@ -62,6 +63,7 @@ public final class WavelengthPerformanceResult implements Model {
   private final @ModelField(targetType="String") String tput_tcp_down;
   private final @ModelField(targetType="String") String tput_udp_up;
   private final @ModelField(targetType="String") String tput_udp_down;
+  private final @ModelField(targetType="Boolean") Boolean selected_boostzone;
   public String getId() {
       return id;
   }
@@ -134,7 +136,11 @@ public final class WavelengthPerformanceResult implements Model {
       return tput_udp_down;
   }
   
-  private WavelengthPerformanceResult(String id, String location, String location_nm, String selected_network, String selected_inout, String radio_network, String radio_strength, String radio_status, String server, String server_nm, String latency_avg, String latency_max, String latency_min, String latency_mdev, String tput_tcp_up, String tput_tcp_down, String tput_udp_up, String tput_udp_down) {
+  public Boolean getSelectedBoostzone() {
+      return selected_boostzone;
+  }
+  
+  private WavelengthPerformanceResult(String id, String location, String location_nm, String selected_network, String selected_inout, String radio_network, String radio_strength, String radio_status, String server, String server_nm, String latency_avg, String latency_max, String latency_min, String latency_mdev, String tput_tcp_up, String tput_tcp_down, String tput_udp_up, String tput_udp_down, Boolean selected_boostzone) {
     this.id = id;
     this.location = location;
     this.location_nm = location_nm;
@@ -153,6 +159,7 @@ public final class WavelengthPerformanceResult implements Model {
     this.tput_tcp_down = tput_tcp_down;
     this.tput_udp_up = tput_udp_up;
     this.tput_udp_down = tput_udp_down;
+    this.selected_boostzone = selected_boostzone;
   }
   
   @Override
@@ -180,7 +187,8 @@ public final class WavelengthPerformanceResult implements Model {
               ObjectsCompat.equals(getTputTcpUp(), wavelengthPerformanceResult.getTputTcpUp()) &&
               ObjectsCompat.equals(getTputTcpDown(), wavelengthPerformanceResult.getTputTcpDown()) &&
               ObjectsCompat.equals(getTputUdpUp(), wavelengthPerformanceResult.getTputUdpUp()) &&
-              ObjectsCompat.equals(getTputUdpDown(), wavelengthPerformanceResult.getTputUdpDown());
+              ObjectsCompat.equals(getTputUdpDown(), wavelengthPerformanceResult.getTputUdpDown()) &&
+              ObjectsCompat.equals(getSelectedBoostzone(), wavelengthPerformanceResult.getSelectedBoostzone());
       }
   }
   
@@ -205,6 +213,7 @@ public final class WavelengthPerformanceResult implements Model {
       .append(getTputTcpDown())
       .append(getTputUdpUp())
       .append(getTputUdpDown())
+      .append(getSelectedBoostzone())
       .toString()
       .hashCode();
   }
@@ -230,7 +239,8 @@ public final class WavelengthPerformanceResult implements Model {
       .append("tput_tcp_up=" + String.valueOf(getTputTcpUp()) + ", ")
       .append("tput_tcp_down=" + String.valueOf(getTputTcpDown()) + ", ")
       .append("tput_udp_up=" + String.valueOf(getTputUdpUp()) + ", ")
-      .append("tput_udp_down=" + String.valueOf(getTputUdpDown()))
+      .append("tput_udp_down=" + String.valueOf(getTputUdpDown()) + ", ")
+      .append("selected_boostzone=" + String.valueOf(getSelectedBoostzone()))
       .append("}")
       .toString();
   }
@@ -276,6 +286,7 @@ public final class WavelengthPerformanceResult implements Model {
       null,
       null,
       null,
+      null,
       null
     );
   }
@@ -298,7 +309,8 @@ public final class WavelengthPerformanceResult implements Model {
       tput_tcp_up,
       tput_tcp_down,
       tput_udp_up,
-      tput_udp_down);
+      tput_udp_down,
+      selected_boostzone);
   }
   public interface BuildStep {
     WavelengthPerformanceResult build();
@@ -320,6 +332,7 @@ public final class WavelengthPerformanceResult implements Model {
     BuildStep tputTcpDown(String tputTcpDown);
     BuildStep tputUdpUp(String tputUdpUp);
     BuildStep tputUdpDown(String tputUdpDown);
+    BuildStep selectedBoostzone(Boolean selectedBoostzone);
   }
   
 
@@ -342,6 +355,7 @@ public final class WavelengthPerformanceResult implements Model {
     private String tput_tcp_down;
     private String tput_udp_up;
     private String tput_udp_down;
+    private Boolean selected_boostzone;
     @Override
      public WavelengthPerformanceResult build() {
         String id = this.id != null ? this.id : UUID.randomUUID().toString();
@@ -364,7 +378,8 @@ public final class WavelengthPerformanceResult implements Model {
           tput_tcp_up,
           tput_tcp_down,
           tput_udp_up,
-          tput_udp_down);
+          tput_udp_down,
+          selected_boostzone);
     }
     
     @Override
@@ -469,6 +484,12 @@ public final class WavelengthPerformanceResult implements Model {
         return this;
     }
     
+    @Override
+     public BuildStep selectedBoostzone(Boolean selectedBoostzone) {
+        this.selected_boostzone = selectedBoostzone;
+        return this;
+    }
+    
     /** 
      * WARNING: Do not set ID when creating a new object. Leave this blank and one will be auto generated for you.
      * This should only be set when referring to an already existing object.
@@ -492,7 +513,7 @@ public final class WavelengthPerformanceResult implements Model {
   
 
   public final class CopyOfBuilder extends Builder {
-    private CopyOfBuilder(String id, String location, String locationNm, String selectedNetwork, String selectedInout, String radioNetwork, String radioStrength, String radioStatus, String server, String serverNm, String latencyAvg, String latencyMax, String latencyMin, String latencyMdev, String tputTcpUp, String tputTcpDown, String tputUdpUp, String tputUdpDown) {
+    private CopyOfBuilder(String id, String location, String locationNm, String selectedNetwork, String selectedInout, String radioNetwork, String radioStrength, String radioStatus, String server, String serverNm, String latencyAvg, String latencyMax, String latencyMin, String latencyMdev, String tputTcpUp, String tputTcpDown, String tputUdpUp, String tputUdpDown, Boolean selectedBoostzone) {
       super.id(id);
       super.location(location)
         .locationNm(locationNm)
@@ -510,7 +531,8 @@ public final class WavelengthPerformanceResult implements Model {
         .tputTcpUp(tputTcpUp)
         .tputTcpDown(tputTcpDown)
         .tputUdpUp(tputUdpUp)
-        .tputUdpDown(tputUdpDown);
+        .tputUdpDown(tputUdpDown)
+        .selectedBoostzone(selectedBoostzone);
     }
     
     @Override
@@ -596,6 +618,11 @@ public final class WavelengthPerformanceResult implements Model {
     @Override
      public CopyOfBuilder tputUdpDown(String tputUdpDown) {
       return (CopyOfBuilder) super.tputUdpDown(tputUdpDown);
+    }
+    
+    @Override
+     public CopyOfBuilder selectedBoostzone(Boolean selectedBoostzone) {
+      return (CopyOfBuilder) super.selectedBoostzone(selectedBoostzone);
     }
   }
   

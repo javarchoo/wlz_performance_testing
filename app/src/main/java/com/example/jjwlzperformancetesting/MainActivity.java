@@ -44,6 +44,7 @@ import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.ToggleButton;
 
 import com.amplifyframework.AmplifyException;
 import com.amplifyframework.api.aws.AWSApiPlugin;
@@ -75,6 +76,7 @@ public class MainActivity extends AppCompatActivity {
     // 전역변수 선언
     String selectedNetwork = "";
     String selectedInout = "";
+    boolean boostZone = false;
     String location = "";
     String locationNm = "";
     String radioNetwork = "";
@@ -797,8 +799,10 @@ public class MainActivity extends AppCompatActivity {
 
             String selectedNetwork = ((RadioButton) findViewById(((RadioGroup) findViewById(R.id.rgNetwork)).getCheckedRadioButtonId())).getText().toString();
             String selectedInout = ((RadioButton) findViewById(((RadioGroup) findViewById(R.id.rgInout)).getCheckedRadioButtonId())).getText().toString();
+            boolean boostZone = ((ToggleButton) findViewById(R.id.boostZone)).isChecked();
             this.selectedNetwork = selectedNetwork;
             this.selectedInout = selectedInout;
+            this.boostZone = boostZone;
 
             TextView tv = null;
 
@@ -1001,6 +1005,7 @@ public class MainActivity extends AppCompatActivity {
                         .tputTcpDown(this.tputTcpUp[i])
                         .tputUdpUp(this.tputUdpDown[i])
                         .tputUdpDown(this.tputUdpUp[i])
+                        .selectedBoostzone(this.boostZone)
                         .build();
                 Amplify.DataStore.save(
                         item,
