@@ -92,7 +92,7 @@ public class MainActivity extends AppCompatActivity {
     String[] tputTcpUp = {"", "", ""};
     String[] tputUdpDown = {"", "", ""};
     String[] tputUdpUp = {"", "", ""};
-    int progressCount =  190; // 30+(50*3);
+    int progressCount =  170; // 30+(50*3);
     int currentCount = 0;
 
     ProgressBar simpleProgressBar;
