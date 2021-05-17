@@ -11,7 +11,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:text="r"
+        android:text=" "
         android:textAlignment="center"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.514"
@@ -223,5 +223,18 @@
         android:textOn="5GX B.Z."
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/rgNetwork" />
+
+    <EditText
+        android:id="@+id/rCount"
+        android:layout_width="69dp"
+        android:layout_height="44dp"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="12dp"
+        android:ems="10"
+        android:inputType="number"
+        android:text="1"
+        android:textSize="10sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/boostZone" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

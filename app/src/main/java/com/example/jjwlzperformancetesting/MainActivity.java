@@ -46,6 +46,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
+import com.amazonaws.util.StringUtils;
 import com.amplifyframework.AmplifyException;
 import com.amplifyframework.api.aws.AWSApiPlugin;
 import com.amplifyframework.core.Amplify;
@@ -61,6 +62,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -72,6 +76,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView tvPingResult;
     private TextView tvIperfResult;
     private TextView tvProgressStatus;
+    private TextView rCount;
 
     // 전역변수 선언
     String selectedNetwork = "";
@@ -92,8 +97,13 @@ public class MainActivity extends AppCompatActivity {
     String[] tputTcpUp = {"", "", ""};
     String[] tputUdpDown = {"", "", ""};
     String[] tputUdpUp = {"", "", ""};
-    int progressCount =  170; // 30+(50*3);
+    Object[] lts = {new String[100], new String[100], new String[100]};
+    int progressCount =  180; // 30+(50*3);
     int currentCount = 0;
+    // 비동기처리 제어 flag
+    boolean thread1 = false;
+    boolean thread2 = false;
+
 
     ProgressBar simpleProgressBar;
 
@@ -183,15 +193,26 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
 
+                rCount = findViewById(R.id.rCount);
+                System.out.println("@@@@@@ count : " + rCount.getText().toString());
+                // TODO 플래그 두고 비동기 처리 제어, 횟수만큼 반복
+
+
                 Thread t = new Thread(new Runnable() {
                     @Override
                     public void run() {
 
-                        String resultPing = runPingTest();
+                        String resultPing = "";
+                        try {
+                            resultPing = runPingTest();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        String finalResultPing = resultPing;
                         mainHandler.post(new Runnable() {
                             @Override
                             public void run() {
-                                tvPingResult.setText(resultPing);
+                                tvPingResult.setText(finalResultPing);
                             }
                         });
 
@@ -521,6 +542,12 @@ public class MainActivity extends AppCompatActivity {
         TelephonyManager tm = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
 
         networkType = SignalStatus.getNetworkTypeName(tm.getNetworkType());
+        int nrStatus = getNrStatus(getApplicationContext());
+        System.out.println("@@@@@@ nrStatus : " + nrStatus);
+        if ("LTE".equals(networkType) && nrStatus > 0 ) {
+            networkType = "NR (" + nrStatus + ")" ;
+        }
+
         TextView networkMode = (TextView) findViewById(R.id.networkMode);
         networkMode.setText("Network Mode: " + networkType);
 
@@ -655,18 +682,24 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void executePing(View v) {
+    public void executePing(View v) throws IOException {
 
         System.out.println("@@실행됨");
 
-        String command = "ping -A -W 50 -c 50 ";
+        String command = "ping -A -W 50 -c 100 ";
         String resultsAvg = "";
         String resultsMinMax = "";
         String result = "";
 
         for (int i = 0; i < this.servers.length; i++) {
+
+            //TODO Iperf 5초 for NR연결
+            executeUpload5sForNRConnect(this.servers[i]);
+
             ShellExecutor se = new ShellExecutor();
-            result = se.execute(command + this.servers[i], true);
+            String[] re = se.execute(command + this.servers[i], true);
+            result = re[0];
+            setLatencies(re[1], i);
 
             String[] strs = result.split(",");
             // strs 가공, average, min/max/mdev
@@ -717,6 +750,9 @@ public class MainActivity extends AppCompatActivity {
 
             String server = this.servers[i];
 
+            //TODO Iperf 5초 for NR연결
+            se.execute(IperfUtil.getCommand(server, IperfUtil.TCP, IperfUtil.UPLOAD, 5));
+
             // TCP Download
             results = "";
             results = se.execute(IperfUtil.getCommand(server, IperfUtil.TCP, IperfUtil.DOWNLOAD));
@@ -724,7 +760,7 @@ public class MainActivity extends AppCompatActivity {
             tcp_download = IperfUtil.getBandwidth(results)[1];
             System.out.println("TCP Download Bandwidth:   " + tcp_download);
             try {
-                sleep(2000);
+                sleep(500);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -735,7 +771,7 @@ public class MainActivity extends AppCompatActivity {
             tcp_upload = IperfUtil.getBandwidth(results)[0];
             System.out.println("TCP Upload Bandwidth:   " + tcp_upload);
             try {
-                sleep(2000);
+                sleep(500);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -746,7 +782,7 @@ public class MainActivity extends AppCompatActivity {
             udp_download = IperfUtil.getBandwidth(results)[1];
             System.out.println("UDP Download Bandwidth:   " + udp_download);
             try {
-                sleep(3000);
+                sleep(500);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -796,6 +832,7 @@ public class MainActivity extends AppCompatActivity {
     }*/
 
         public void sendData(View v) {
+            System.out.println("@@ Start Method: sendData");
 
             String selectedNetwork = ((RadioButton) findViewById(((RadioGroup) findViewById(R.id.rgNetwork)).getCheckedRadioButtonId())).getText().toString();
             String selectedInout = ((RadioButton) findViewById(((RadioGroup) findViewById(R.id.rgInout)).getCheckedRadioButtonId())).getText().toString();
@@ -985,7 +1022,7 @@ public class MainActivity extends AppCompatActivity {
             return strResult;
         }
 
-        private void create() {
+        private void createWithAmplify() {
             for (int i = 0; i < servers.length; i++) {
                 WavelengthPerformanceResult item = WavelengthPerformanceResult.builder()
                         .location(this.location)
@@ -1016,40 +1053,82 @@ public class MainActivity extends AppCompatActivity {
         }
 
 
+    private void create() {
+        System.out.println("@@ Start Method: create");
 
+        String boostZone = (this.boostZone) ? "True" : "False";
+        String latitude = this.location.split(",")[0].trim();
+        String longitude = this.location.split(",")[1].trim();
 
-        // TODO 여기서부터 refactoring 대상
-        public String runPingTest() {
-
-            Log.d(TAG, "pingTest시작");
-
-            String command = "ping -A -W 50 -c 50 ";
-            String resultsAvg = "";
-            String resultsMinMax = "";
-            String result = "";
-
-            for (int i = 0; i < this.servers.length; i++) {
-                ShellExecutor se = new ShellExecutor();
-                result = se.execute(command + this.servers[i], true);
-
-                String[] strs = result.split(",");
-                // strs 가공, average, min/max/mdev
-                String avg = strs[0].split("=")[1].split("/")[1];
-                String min = strs[0].split("=")[1].split("/")[0].trim();
-                String max = strs[0].split("=")[1].split("/")[2];
-                String mdev = strs[0].split("=")[1].split("/")[3].split(" ")[0].trim();
-
-                this.latencyAvg[i] = avg;
-                this.latencyMin[i] = min;
-                this.latencyMax[i] = max;
-                this.latencyMdev[i] = mdev;
-
-                resultsAvg = resultsAvg + "[" + setRPad(serversNm[i], 13, " ") + "] avg = " + avg + "\n";
-                resultsMinMax = resultsMinMax + "[" + setRPad(serversNm[i], 13, " ") + "] min/max/mdev = " + min.split("\\.")[0] + "/" + max.split("\\.")[0] + "/" + mdev.split("\\.")[0] + "\n";
+        for (int i = 0; i < servers.length; i++) {
+            String[] lt = (String[]) this.lts[i];
+            DBInsertTask insertTask = new DBInsertTask();
+            System.out.println("@@ locationNm :" +this.locationNm);
+            insertTask.execute(this.latencyAvg[i], this.latencyMax[i], this.latencyMdev[i], this.latencyMin[i], this.location, latitude, longitude,
+                    this.locationNm, this.radioNetwork, this.radioStatus, this.radioStrength, boostZone, this.selectedInout, this.selectedNetwork, servers[i], serversNm[i],
+                    this.tputTcpDown[i], this.tputTcpUp[i], this.tputUdpDown[i], this.tputUdpUp[i],
+                    lt[0], lt[1], lt[2], lt[3], lt[4], lt[5], lt[6], lt[7], lt[8], lt[9], lt[10], lt[11], lt[12], lt[13], lt[14], lt[15], lt[16], lt[17], lt[18], lt[19],
+                    lt[20], lt[21], lt[22], lt[23], lt[24], lt[25], lt[26], lt[27], lt[28], lt[29], lt[30], lt[31], lt[32], lt[33], lt[34], lt[35], lt[36], lt[37], lt[38], lt[39],
+                    lt[40], lt[41], lt[42], lt[43], lt[44], lt[45], lt[46], lt[47], lt[48], lt[49], lt[50], lt[51], lt[52], lt[53], lt[54], lt[55], lt[56], lt[57], lt[58], lt[59],
+                    lt[60], lt[61], lt[62], lt[63], lt[64], lt[65], lt[66], lt[67], lt[68], lt[69], lt[70], lt[71], lt[72], lt[73], lt[74], lt[75], lt[76], lt[77], lt[78], lt[79],
+                    lt[80], lt[81], lt[82], lt[83], lt[84], lt[85], lt[86], lt[87], lt[88], lt[89], lt[90], lt[91], lt[92], lt[93], lt[94], lt[95], lt[96], lt[97], lt[98], lt[99]
+            );
+/*
+            if (i < servers.length - 1) {
+                try {
+                    sleep(5000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
+*/
 
-            return resultsAvg + "\n" + resultsMinMax;
         }
+/*
+        String url = "http://13.125.28.176/wlz/try.php";
+        DatabaseInsertTask dbInsert = new DatabaseInsertTask(url, null);
+        dbInsert.execute();
+*/
+    }
+
+
+    // TODO 여기서부터 refactoring 대상
+    public String runPingTest() throws IOException {
+
+        Log.d(TAG, "pingTest시작");
+
+        String command = "ping -A -W 50 -c 100 ";
+        String resultsAvg = "";
+        String resultsMinMax = "";
+        String result = "";
+
+        for (int i = 0; i < this.servers.length; i++) {
+            //TODO Iperf 5초 for NR연결
+            executeUpload5sForNRConnect(this.servers[i]);
+
+            ShellExecutor se = new ShellExecutor();
+            String[] re =  se.execute(command + this.servers[i], true);
+            result = re[0];
+            setLatencies(re[1], i);
+
+            String[] strs = result.split(",");
+            // strs 가공, average, min/max/mdev
+            String avg = strs[0].split("=")[1].split("/")[1];
+            String min = strs[0].split("=")[1].split("/")[0].trim();
+            String max = strs[0].split("=")[1].split("/")[2];
+            String mdev = strs[0].split("=")[1].split("/")[3].split(" ")[0].trim();
+
+            this.latencyAvg[i] = avg;
+            this.latencyMin[i] = min;
+            this.latencyMax[i] = max;
+            this.latencyMdev[i] = mdev;
+
+            resultsAvg = resultsAvg + "[" + setRPad(serversNm[i], 13, " ") + "] avg = " + avg + "\n";
+            resultsMinMax = resultsMinMax + "[" + setRPad(serversNm[i], 13, " ") + "] min/max/mdev = " + min.split("\\.")[0] + "/" + max.split("\\.")[0] + "/" + mdev.split("\\.")[0] + "\n";
+        }
+
+        return resultsAvg + "\n" + resultsMinMax;
+    }
 
     public String runIperfTest() throws IOException {
 
@@ -1080,6 +1159,9 @@ public class MainActivity extends AppCompatActivity {
 
             String server = this.servers[i];
 
+            //TODO Iperf 5초 for NR연결
+            se.execute(IperfUtil.getCommand(server, IperfUtil.TCP, IperfUtil.UPLOAD, 5));
+
             // TCP Download
             results = "";
             results = se.execute(IperfUtil.getCommand(server, IperfUtil.TCP, IperfUtil.DOWNLOAD));
@@ -1087,7 +1169,7 @@ public class MainActivity extends AppCompatActivity {
             tcp_download = IperfUtil.getBandwidth(results)[1];
             System.out.println("TCP Download Bandwidth:   " + tcp_download);
             try {
-                sleep(2000);
+                sleep(500);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -1098,7 +1180,7 @@ public class MainActivity extends AppCompatActivity {
             tcp_upload = IperfUtil.getBandwidth(results)[0];
             System.out.println("TCP Upload Bandwidth:   " + tcp_upload);
             try {
-                sleep(2000);
+                sleep(500);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -1109,7 +1191,7 @@ public class MainActivity extends AppCompatActivity {
             udp_download = IperfUtil.getBandwidth(results)[1];
             System.out.println("UDP Download Bandwidth:   " + udp_download);
             try {
-                sleep(3000);
+                sleep(500);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -1132,5 +1214,133 @@ public class MainActivity extends AppCompatActivity {
 
         // comment
         return resultTxt;
+    }
+
+    private void setLatencies(String s, int i) {
+        String[] list = (String[]) this.lts[i];
+        String[] lines = s.split("\n");
+        for (int j = 0; j < lines.length; j++) {
+            String line = lines[j];
+            if (line.contains("icmp_seq")) {
+                int seq = Integer.parseInt(line.split("icmp_seq=")[1].substring(0,3).split(" ")[0]);
+                String latency = line.split("time=")[1].substring(0,4);
+                list[seq-1] = latency;
+            }
+        }
+
+
+        // TODO TMP delete
+        String[] tlist = (String[]) this.lts[i];
+        for (int k = 0; k < tlist.length; k++) {
+            System.out.println("@@@@@@ " + tlist[k]);
+        }
+    }
+
+    private void executeUpload5sForNRConnect(String server) throws IOException {
+
+        ShellExecutor se = new ShellExecutor();
+
+        // app/assets/iperf3파일을 핸드폰으로 복사
+        copyAssets(IperfUtil.IPERF3);
+
+        // 파일권한 변경 "chmod 755 /data/user/0/com.example.jjwlzperformancetesting/files/iperf3"
+        se.execute("chmod 755 " + Const.PATH + IperfUtil.IPERF3);
+
+        se.execute(IperfUtil.getCommand(server, IperfUtil.TCP, IperfUtil.UPLOAD, 5));
+    }
+
+
+    private static int getNrStatus(Context context) {
+//        ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        TelephonyManager tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+
+        int nrStatus = 0;
+        Object oServiceState = null;
+        try {
+            Class cTelephonyManager = Class.forName(tm.getClass().getName());
+            Method mGetServiceState = cTelephonyManager.getDeclaredMethod("getServiceState");
+            oServiceState = mGetServiceState.invoke(tm);
+        } catch (ClassNotFoundException e) {
+            nrStatus = -3;
+        } catch (NoSuchMethodException e) {
+            nrStatus = -4;
+        } catch (IllegalAccessException e) {
+            nrStatus = -5;
+        } catch (InvocationTargetException e) {
+            nrStatus = -6;
+        }
+
+        if (oServiceState != null) {
+            if (Build.VERSION.SDK_INT >= 29) {
+                try {
+                    Class cServiceState = Class.forName(oServiceState.getClass().getName());
+                    Method mToString = cServiceState.getDeclaredMethod("toString");
+                    mToString.setAccessible(true);
+                    String dumpString = (String) mToString.invoke(oServiceState);
+                    int dataInfoStartIndex = dumpString.indexOf("DataSpecificRegistrationInfo");
+                    if (dataInfoStartIndex > -1) {
+                        int dataInfoEndIndex = dumpString.indexOf("]", dataInfoStartIndex);
+                        String subString;
+                        if (dataInfoEndIndex > dataInfoStartIndex) {
+                            subString = dumpString.substring(dataInfoStartIndex, dataInfoEndIndex);
+                        } else {
+                            subString = dumpString.substring(dataInfoStartIndex);
+                        }
+
+                        final String nrStateParam = "nrState=";
+                        final String nrStateClose = "}";
+                        int nrStartIndex = subString.indexOf(nrStateParam);
+                        if (nrStartIndex > -1) {
+                            int nrEndIndex = subString.indexOf(nrStateClose, nrStartIndex);
+                            String nrStateString;
+                            if (nrEndIndex > nrStartIndex) {
+                                nrStateString = subString.substring(nrStartIndex + nrStateParam.length(), nrEndIndex);
+                            } else {
+                                nrStateString = subString.substring(nrStartIndex + nrStateParam.length());
+                            }
+
+                            if (nrStateString.contains("CONNECTED")) {
+                                nrStatus = 3;
+                            } else if (nrStateString.contains("NOT_RESTRICTED")) {
+                                nrStatus = 2;
+                            } else if (nrStateString.contains("RESTRICTED")) {
+                                nrStatus = 1;
+                            } else if (nrStateString.contains("NONE")) {
+                                nrStatus = -1;
+                            }
+                        }
+                    }
+                } catch (ClassNotFoundException e) {
+                    nrStatus = -7;
+                } catch (NoSuchMethodException e) {
+                    nrStatus = -8;
+                } catch (IllegalAccessException e) {
+                    nrStatus = -9;
+                } catch (InvocationTargetException e) {
+//                    e.printStackTrace();
+                    nrStatus = -10;
+                }
+            } else {
+                try {
+                    Class cServiceState = Class.forName(oServiceState.getClass().getName());
+                    Method mGetNrStatus = cServiceState.getDeclaredMethod("getNrStatus");
+                    mGetNrStatus.setAccessible(true);
+                    Integer oNrStatus = (Integer) mGetNrStatus.invoke(oServiceState);
+                    if (oNrStatus != null) {
+                        nrStatus = oNrStatus;
+                    }
+                } catch (ClassNotFoundException e) {
+                    nrStatus = -7;
+                } catch (NoSuchMethodException e) {
+                    nrStatus = -8;
+                } catch (IllegalAccessException e) {
+                    nrStatus = -9;
+                } catch (InvocationTargetException e) {
+//                    e.printStackTrace();
+                    nrStatus = -10;
+                }
+            }
+        }
+        return nrStatus;
     }
 }

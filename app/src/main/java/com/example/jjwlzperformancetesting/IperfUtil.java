@@ -43,6 +43,28 @@ public class IperfUtil {
         }
     }
 
+    public static String getCommand(String region, String protocol, boolean download, int time) {
+        if (TCP.equals(protocol)) {
+            if (download) {
+                // run in reverse mode (server sends, client receives)
+                return getCommand(region, TCP, PORT, BITRATE, time, JSON) + " -R";
+            } else {
+                return getCommand(region, TCP, PORT, BITRATE, time, JSON);
+            }
+        } else if (UDP.equals(protocol)) {
+            if (download) {
+                // run in reverse mode (server sends, client receives)
+                return getCommand(region, UDP, PORT, BITRATE, time, JSON) + " -R";
+            } else {
+                return getCommand(region, UDP, PORT, BITRATE, time, JSON);
+            }
+        } else {
+            // TODO ERROR LOG
+            System.out.println("Error:Unexpected protocol");
+            return "";
+        }
+    }
+
     public static String getCommand(String region, String protocol, int port, String bitrate, int time, String format) {
         return Const.PATH + IPERF3
                 + " -c " + region

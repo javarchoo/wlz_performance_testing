@@ -14,12 +14,12 @@ public class ShellExecutor {
     }
 
     public String execute(String command) {
-        return execute(command, false);
+        return execute(command, false)[1];
     }
 
-    public String execute(String command, boolean lastLineFlag) {
+    public String[] execute(String command, boolean lastLineFlag) {
 
-
+        String[] re = {"", ""};
         StringBuffer output = new StringBuffer();
         String lastLine = "";
 
@@ -47,11 +47,17 @@ public class ShellExecutor {
         }
         System.out.println("@@실행완료");
 
+        re[0] = lastLine;
+        re[1] = output.toString();
+
+        return re;
+/*
         if(lastLineFlag) {
             return lastLine;
         } else {
             return output.toString();
         }
+*/
 
 /*
         String[] commands = {"/data/user/0/com.example.jjwlzperformancetesting/files/iperf3", "-c", "223.62.93.226"};
