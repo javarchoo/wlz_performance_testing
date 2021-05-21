@@ -715,7 +715,7 @@ public class MainActivity extends AppCompatActivity {
 
         for (int i = 0; i < this.servers.length; i++) {
 
-            //TODO Iperf 5초 for NR연결
+            //TODO Iperf for NR연결
             executeUpload5sForNRConnect(this.servers[i]);
 
             ShellExecutor se = new ShellExecutor();
@@ -1125,7 +1125,7 @@ public class MainActivity extends AppCompatActivity {
         String result = "";
 
         for (int i = 0; i < this.servers.length; i++) {
-            //TODO Iperf 5초 for NR연결
+            //TODO Iperf for NR연결
             executeUpload5sForNRConnect(this.servers[i]);
 
             ShellExecutor se = new ShellExecutor();
@@ -1268,7 +1268,7 @@ public class MainActivity extends AppCompatActivity {
         // 파일권한 변경 "chmod 755 /data/user/0/com.example.jjwlzperformancetesting/files/iperf3"
         se.execute("chmod 755 " + Const.PATH + IperfUtil.IPERF3);
 
-        se.execute(IperfUtil.getCommand(server, IperfUtil.TCP, IperfUtil.UPLOAD, 5));
+        se.execute(IperfUtil.getCommand(server, IperfUtil.UDP, IperfUtil.UPLOAD, 2));
     }
 
 
