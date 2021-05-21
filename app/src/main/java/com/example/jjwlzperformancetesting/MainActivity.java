@@ -5,6 +5,7 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.widget.ContentLoadingProgressBar;
 import androidx.navigation.fragment.DialogFragmentNavigatorDestinationBuilder;
 
 import android.Manifest;
@@ -100,10 +101,6 @@ public class MainActivity extends AppCompatActivity {
     Object[] lts = {new String[100], new String[100], new String[100]};
     int progressCount =  180; // 30+(50*3);
     int currentCount = 0;
-    // 비동기처리 제어 flag
-    boolean thread1 = false;
-    boolean thread2 = false;
-
 
     ProgressBar simpleProgressBar;
 
@@ -194,91 +191,116 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
 
                 rCount = findViewById(R.id.rCount);
-                System.out.println("@@@@@@ count : " + rCount.getText().toString());
+                int count = Integer.parseInt(rCount.getText().toString());
+                System.out.println("@@@@@@ count : " + count);
                 // TODO 플래그 두고 비동기 처리 제어, 횟수만큼 반복
 
+                System.out.println(" ■ ■ ■ ■ ■ 11■ thread1: " + Const.thread1);
+                System.out.println(" ■ ■ ■ ■ ■ 11■ thread2: " + Const.thread2);
 
-                Thread t = new Thread(new Runnable() {
-                    @Override
-                    public void run() {
+                for (int i = 0; i < count ; i++) {
 
-                        String resultPing = "";
+                    while (Const.thread1 || Const.thread2) {
                         try {
-                            resultPing = runPingTest();
-                        } catch (IOException e) {
+                            sleep(10000);
+                        } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
-                        String finalResultPing = resultPing;
-                        mainHandler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                tvPingResult.setText(finalResultPing);
-                            }
-                        });
-
-                        String resultIperf = "";
-                        try {
-                            resultIperf = runIperfTest();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                        String finalResultIperf = resultIperf;
-                        mainHandler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                tvIperfResult.setText(finalResultIperf);
-                                Toast.makeText(getApplicationContext(), "done!", Toast.LENGTH_LONG).show();
-                            }
-                        });
-
-                        sendData(v);
                     }
-                });
-                t.start();
 
-                Thread t2 = new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        int currentCount = 0;
-                        for (int i = 0; i < progressCount; i++) {
-                            currentCount = currentCount + 1;
+                    Thread t = new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Const.thread1 = true;
+                            System.out.println(" ■ ■ ■ ■ ■ ■ Thread1 Start ■ ■ ■ ■ ■ ■");
+
+                            String resultPing = "";
                             try {
-                                Thread.sleep(1000);
-                            } catch (InterruptedException e) {
+                                resultPing = runPingTest();
+                            } catch (IOException e) {
                                 e.printStackTrace();
                             }
-
-                            int finalCurrentCount = currentCount;
+                            String finalResultPing = resultPing;
                             mainHandler.post(new Runnable() {
                                 @Override
                                 public void run() {
-                                    for (int i = 0; i < progressCount; i++) {
-                                        tvProgressStatus.setText(String.valueOf(finalCurrentCount) + "/" + String.valueOf(progressCount));
-                                    }
+                                    tvPingResult.setText(finalResultPing);
                                 }
                             });
+
+                            String resultIperf = "";
+                            try {
+                                resultIperf = runIperfTest();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                            String finalResultIperf = resultIperf;
+                            mainHandler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    tvIperfResult.setText(finalResultIperf);
+                                    Toast.makeText(getApplicationContext(), "done!", Toast.LENGTH_LONG).show();
+                                }
+                            });
+
+                            sendData(v);
+                            System.out.println(" ■ ■ ■ ■ ■ ■ Thread1 End ■ ■ ■ ■ ■ ■");
+                            Const.thread1 = false;
                         }
+                    });
 
+                    Thread t2 = new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Const.thread2 = true;
+                            System.out.println(" ■ ■ ■ ■ ■ ■ Thread2 Start ■ ■ ■ ■ ■ ■");
+
+                            int currentCount = 0;
+                            for (int i = 0; i < progressCount; i++) {
+                                currentCount = currentCount + 1;
+                                try {
+                                    Thread.sleep(1000);
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+
+                                int finalCurrentCount = currentCount;
+                                mainHandler.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        for (int i = 0; i < progressCount; i++) {
+                                            tvProgressStatus.setText(String.valueOf(finalCurrentCount) + "/" + String.valueOf(progressCount));
+                                        }
+                                    }
+                                });
+                            }
+                            System.out.println(" ■ ■ ■ ■ ■ ■ Thread2 End ■ ■ ■ ■ ■ ■");
+                            Const.thread2 = false;
+                        }
+                    });
+
+                    t.start();
+                    t2.start();
+
+                    System.out.println(" ■ ■ ■ ■ ■22 ■ thread1: " + Const.thread1);
+                    System.out.println(" ■ ■ ■ ■ ■22 ■ thread2: " + Const.thread2);
+                    /*
+                    executePing(v);
+                    try {
+                        executeIperf(v);
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
-                });
-                t2.start();
+                    sendData(v);
+                    */
 
-                /*
-                executePing(v);
-                try {
-                    executeIperf(v);
-                } catch (IOException e) {
-                    e.printStackTrace();
+                    Toast.makeText(MainActivity.this, "start!", Toast.LENGTH_LONG).show();
+                    simpleProgressBar = (ProgressBar) findViewById(R.id.progressBar1);
+                    simpleProgressBar.setVisibility(View.VISIBLE);
+                    simpleProgressBar.setMax(progressCount);
+                    setProgressValue(0);
+
                 }
-                sendData(v);
-                */
-
-                Toast.makeText(MainActivity.this, "start!", Toast.LENGTH_LONG).show();
-                simpleProgressBar = (ProgressBar) findViewById(R.id.progressBar1);
-                simpleProgressBar.setVisibility(View.VISIBLE);
-                simpleProgressBar.setMax(progressCount);
-                setProgressValue(0);
-
             }
         });
     }

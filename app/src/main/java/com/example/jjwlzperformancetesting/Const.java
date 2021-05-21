@@ -12,4 +12,8 @@ public class Const {
     public static final String DAEJEON_L = "Daejeon";
     public static final String PUSAN_L = "Pusan";
     public static final String P_SEOUL_L = "Seoul(Public)";
+
+    // 비동기 처리제어 Flag
+    public static boolean thread1 = false;
+    public static boolean thread2 = false;
 }
